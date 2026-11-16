@@ -1,0 +1,14 @@
+Session 1 lab prompts (Segment 6 and the run-and-tweak sheet).
+
+How to use: start a fresh chat for each prompt (python code/s1/6_compass.py), paste the prompt as ONE line,
+note the footer, then type exit. A fresh chat keeps earlier answers out of the request, so the two models
+are measured on exactly the same input. Run all three on claude-sonnet-5-5, then all three on claude-haiku-5-5.
+
+SHORT
+What is a P1 incident?
+
+LONG
+Incident INC-20417 (sanitized training example). At 08:42 UTC the monitoring system raised an alert that the customer self-service portal was returning HTTP 502 errors for about 30% of requests. The on-call engineer acknowledged the page at 08:49 and confirmed that the two web nodes behind the load balancer were healthy, but that one of the three application servers had stopped responding to health checks after an automatic patch reboot at 08:30. The load balancer kept sending traffic to it for twelve minutes because its health-check interval had been raised from 10 to 60 seconds during a change two weeks earlier. Users saw intermittent errors when they tried to log in or download invoices; the service desk received 41 tickets, and the status page was not updated until 09:15. The engineer removed the server from the pool at 09:02, errors stopped at 09:04, and the server was back in service after a manual restart of the application service at 09:40. No data was lost. Open questions: why the application service did not start after the reboot, why the health-check interval was changed, and who owns the status page during the night shift. Summarize this incident in three bullet points, give it a priority (P1, P2 or P3) with one reason, and list the follow-up actions.
+
+REASONING
+Since this morning, remote users say the VPN drops every 10 minutes. Three possible causes: an expired certificate on the VPN gateway, a DHCP lease-time change pushed last night, or an overloaded authentication server. Which should I check first, and why?

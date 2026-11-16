@@ -1,0 +1,12 @@
+# Needs Python 3.11 or later (the Session 1 exercise uses tomllib). Tested together on 2026-11-14 with Python 3.13.
+# Change a version on purpose and re-run the dry run; do not unpin.
+anthropic==2.8.0
+python-dotenv==1.2.4
+pydantic==2.14.3
+# The ServiceDesk mock service (code/servicedesk/, from Session 4). Tested together with the pins above on 2026-11-15 with Python 3.13.
+fastapi==0.163.1
+uvicorn==0.54.0
+# Session 4 (code/s4/). mcp: the MCP SDK, whose server class is MCPServer in mcp.server.mcpserver (FastMCP is gone in 2.x).
+# jsonschema: checks tool arguments against the tool's input schema (mcp needs it too). Tested together with the pins above on 2026-11-16.
+mcp==2.3.0
+jsonschema==4.26.0
