@@ -69,7 +69,7 @@ if __name__ == "__main__":
                                      tools=[TOOL], tool_choice={"type": "tool", "name": "record_incident"})
     except anthropic.BadRequestError as e:
         print("forced tool_choice rejected:", e.message)
-    for tid in (sys.argv[1:] or list(TICKETS)):                           # step 2: auto, then validate either way
+    for tid in (list(TICKETS)):                           # step 2: auto, then validate either way
         call = extract_via_tool(TICKETS[tid])
         if call is None:
             print(tid, "| PROSE: the model did not call the tool")
