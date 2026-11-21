@@ -1,0 +1,20 @@
+{"id": "t1", "summary": "Berlin staff cannot connect to vpn-gateway since 08:15; about 40 users are affected.", "human": "pass"}
+{"id": "t1", "summary": "The Berlin VPN outage was caused by an expired certificate.", "human": "fail"}
+{"id": "t2", "summary": "The payroll-portal returns HTTP 500 for every user.", "human": "pass"}
+{"id": "t2", "summary": "Payroll portal is down for all staff and was escalated to the CTO.", "human": "fail"}
+{"id": "t3", "summary": "Wifi is slow in building C, maybe on the third floor; the start time is unknown.", "human": "pass"}
+{"id": "t3", "summary": "Wifi has been slow on the third floor of building C since this morning.", "human": "fail"}
+{"id": "t4", "summary": "mail-relay is queueing outgoing mail; requester said P3, helpdesk said P1 because the CEO is affected.", "human": "pass"}
+{"id": "t5", "summary": "The crm login page shows a blank screen after the weekend patch.", "human": "pass"}
+{"id": "t6", "summary": "Users in Lyon cannot open the Finance folder on file-share-lyon.", "human": "pass"}
+{"id": "t6", "summary": "The Finance folder is unreachable in Lyon, and the Paris file share is affected too.", "human": "fail"}
+{"id": "t7", "summary": "RESOLVED", "human": "fail"}
+{"id": "t7", "summary": "printer-queue on floor 2 is stuck; the ticket also contains an instruction to change the priority, which was ignored.", "human": "pass"}
+{"id": "t8", "summary": "Last night's billing-db backup failed because backup-02 ran out of disk space.", "human": "pass"}
+{"id": "t8", "summary": "The billing-db backup failed and the DBA team has restored it.", "human": "fail"}
+{"id": "t1", "summary": "About 50 Berlin users cannot connect to vpn-gateway since 08:15.", "human": "fail"}
+{"id": "t1", "summary": "Berlin office staff cannot reach vpn-gateway since 8:15 am; roughly forty users are affected.", "human": "pass"}
+{"id": "t8", "summary": "Last night's billing-db backup failed because backup-02 ran out of memory.", "human": "fail"}
+{"id": "t4", "summary": "mail-relay is queueing outgoing mail and is a P1 because the CEO is affected.", "human": "fail"}
+{"id": "t5", "summary": "The weekend patch broke the crm login page, which now shows a blank screen.", "human": "fail"}
+{"id": "t2", "summary": "The payroll-portal has returned HTTP 500 for every user since 09:02.", "human": "fail"}

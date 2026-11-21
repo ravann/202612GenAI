@@ -1,0 +1,13 @@
+# Model settings. Change a value here, not in the code.
+model = "claude-sonnet-5-5"            # 🔎 confirm current model ID
+system = "You are Compass, an IT-operations assistant. Be concise. If you do not know, say so."
+max_tokens = 2000                      # thinking tokens count against this cap, so leave room for the answer
+timeout = 30                           # seconds per request
+max_retries = 2
+log_path = "calls.jsonl"               # metadata only: never prompt text, never a key
+
+# USD per million tokens [input, output]. Checked 2026-11-15. Prices change: re-check before every cohort. 🔎
+# The Haiku 5.5 price holds for prompts up to 100K tokens.
+[prices]
+"claude-sonnet-5-5" = [2.00, 10.00]
+"claude-haiku-5-5" = [0.10, 0.50]
