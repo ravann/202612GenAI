@@ -30,8 +30,10 @@ class IncidentExtract(BaseModel):
 if __name__ == "__main__":
     print(json.dumps(transform_schema(IncidentExtract), indent=2))            # what the model will be shown
     ok = IncidentExtract(ticket_id=None, service="vpn-gateway", priority="P2", summary="VPN down.", ambiguity_notes=[])
+    print("=== valid example ===")
     print(ok.model_dump())
     try:
         IncidentExtract(ticket_id=None, service=None, priority="urgent", summary="x", ambiguity_notes=[])
     except ValidationError as e:
+        print("=== exception from invalid example ===")
         print(e)                                                              # Python-side check of the same contract

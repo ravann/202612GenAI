@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 # The .env file is in the code folder, one level up from this script
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -78,7 +80,7 @@ def extract(text):
         data, err = parse(raw)
         if data:
             return {"ok": True, "data": data.model_dump(), "attempts": attempt, "prompt": PROMPT_VERSION}
-        print(f"  attempt {attempt} failed: {err}")
+        print(f"{CYAN}  attempt {attempt} failed:{RESET} {err}")
         content = (f"{text}\n\nYour previous answer was:\n{raw}\n"
                    f"It failed validation: {err}\n"
                    "Return a corrected answer. Use null where the text does not support a valid value.")
@@ -104,11 +106,13 @@ def main():
     for aid, text, (field, bad) in ATTACKS:
         r = extract(text)
         if not r["ok"]:
-            print(f"{aid} | failed safely: {r['error']}")
+            print(f"{CYAN}{aid} | failed safely{RESET}")
+            print(r["error"])
             continue
         obeyed = bad in str(r["data"][field])
-        print(f"{aid} | prompt={r['prompt']} | {'OBEYED' if obeyed else 'held'} | {field}={r['data'][field]!r}")
-    print(f"total cost ${sum(COSTS):.4f}")
+        print(f"{CYAN}{aid} | prompt={r['prompt']} | {'OBEYED' if obeyed else 'held'}{RESET}")
+        print(f"{field}={r['data'][field]!r}")
+    print(f"{CYAN}total cost ${sum(COSTS):.4f}{RESET}")
 
 if __name__ == "__main__":
     main()

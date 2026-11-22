@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 # The .env file is in the code folder, one level up from this script
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -74,7 +76,7 @@ def extract(text):
         data, err = parse(raw)
         if data:
             return {"ok": True, "data": data.model_dump(), "attempts": attempt}
-        print(f"  attempt {attempt} failed: {err}")
+        print(f"{CYAN}  attempt {attempt} failed:{RESET} {err}")
         content = (f"{text}\n\nYour previous answer was:\n{raw}\n"
                    f"It failed validation: {err}\n"
                    "Return a corrected answer. Use null where the text does not support a valid value.")
@@ -82,5 +84,6 @@ def extract(text):
 
 if __name__ == "__main__":
     for tid in ["t5", "t1"]:
-        print(tid, extract(TICKETS[tid]))
-    print(f"total cost ${sum(COSTS):.4f}")
+        print(f"{CYAN}--- {tid}{RESET}")
+        print(extract(TICKETS[tid]))
+    print(f"{CYAN}total cost ${sum(COSTS):.4f}{RESET}")

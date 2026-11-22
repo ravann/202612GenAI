@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 # The .env file is in the code folder, one level up from this script
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -78,7 +80,7 @@ def extract(text):
         data, err = parse(raw)
         if data:
             return {"ok": True, "data": data.model_dump(), "attempts": attempt, "prompt": PROMPT_VERSION}
-        print(f"  attempt {attempt} failed: {err}")
+        print(f"{CYAN}  attempt {attempt} failed:{RESET} {err}")
         content = (f"{text}\n\nYour previous answer was:\n{raw}\n"
                    f"It failed validation: {err}\n"
                    "Return a corrected answer. Use null where the text does not support a valid value.")
@@ -97,9 +99,9 @@ def main():
     for tid in ids:
         r = extract(TICKETS[tid])
         reasons = review_reasons(r["data"]) if r["ok"] else [r["error"]]
-        print(f"{tid} | ok={r['ok']} | attempts={r['attempts']} | prompt={r['prompt']} | needs_review={bool(reasons)}")
+        print(f"{CYAN}{tid} | ok={r['ok']} | attempts={r['attempts']} | prompt={r['prompt']} | needs_review={bool(reasons)}{RESET}")
         print(f"    data={r.get('data')}\n    reasons={reasons}")
-    print(f"total cost ${sum(COSTS):.4f}")
+    print(f"{CYAN}total cost ${sum(COSTS):.4f}{RESET}")
 
 if __name__ == "__main__":
     main()

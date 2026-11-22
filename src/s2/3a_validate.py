@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 # The .env file is in the code folder, one level up from this script
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -67,8 +69,16 @@ def parse(raw):
 
 if __name__ == "__main__":
     bad = '{"ticket_id": "INC-77", "service": null, "priority": "P3", "summary": "x", "ambiguity_notes": []}'
-    print(parse(bad))                          # offline: no API call
-    print(parse("Sure! Here is the JSON."))    # offline: not JSON
+    (res, err) = parse(bad)
+    print(f"{CYAN}--- bad ticket {RESET}")
+    print((err))                          # offline: no API call
+    not_json = "not JSON at all"
+    (res, err) = parse(not_json)
+    print(f"{CYAN}--- not JSON {RESET}")
+    print((err))                          # offline: no API call
     for tid in ["t1", "t5"]:
-        data, err = parse(extract_once(TICKETS[tid]))
-        print(tid, "valid" if data else f"INVALID: {err}")
+        ticket_parsed_raw = extract_once(TICKETS[tid])
+        (data, err) = parse(ticket_parsed_raw)
+        print(f"{CYAN}--- {tid}{RESET}")
+        print(json.dumps(ticket_parsed_raw, indent=2))
+        print("valid" if data else f"INVALID: {err}")

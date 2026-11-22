@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 # The .env file is in the code folder, one level up from this script
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -48,5 +50,7 @@ def extract_once(content, system=SYSTEM, **options):
 
 if __name__ == "__main__":
     raw = extract_once(TICKETS["t1"])
+    print(f"{CYAN}== raw model text{RESET}")
     print(raw)                                                    # the raw text, before any parsing
+    print(f"{CYAN}== parsed JSON{RESET}")
     print(json.dumps(json.loads(raw), indent=2))

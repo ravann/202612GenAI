@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 # The .env file is in the code folder, one level up from this script
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -30,11 +32,12 @@ def run(system, text, n=3):
     for i in range(n):
         started = time.perf_counter()
         resp = model.ask([{"role": "user", "content": text}], max_tokens=1000)    # room for thinking tokens
-        print(f"--- run {i + 1}\n{model.text_of(resp)}")
+        print(f"{CYAN}--- run {i + 1}{RESET}")
+        print(model.text_of(resp))
         model.report(resp, time.perf_counter() - started)                       # footer and calls.jsonl line, as in Session 1
 
 if __name__ == "__main__":
-    print("== vague prompt")
+    print(f"{CYAN}== vague prompt{RESET}")
     run(VAGUE, TICKETS["t3"])
-    print("== output contract")
+    print(f"{CYAN}== output contract{RESET}")
     run(CONTRACT, TICKETS["t3"])

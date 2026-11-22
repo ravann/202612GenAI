@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 # The .env file is in the code folder, one level up from this script
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -68,15 +70,19 @@ if __name__ == "__main__":
         get_model_with_system_prompt(TOOL_SYSTEM).ask([{"role": "user", "content": TICKETS["t1"]}], max_tokens=2000,
                                      tools=[TOOL], tool_choice={"type": "tool", "name": "record_incident"})
     except anthropic.BadRequestError as e:
-        print("forced tool_choice rejected:", e.message)
+        print(f"{CYAN}forced tool_choice rejected:{RESET}")
+        print(e.message)
     for tid in (list(TICKETS)):                           # step 2: auto, then validate either way
         call = extract_via_tool(TICKETS[tid])
         if call is None:
-            print(tid, "| PROSE: the model did not call the tool")
+            print(f"{CYAN}{tid}{RESET} | PROSE: the model did not call the tool")
             continue
         try:
             IncidentExtract.model_validate(call.input)
-            print(tid, "| tool call | valid")
+            print(f"{CYAN}{tid} | tool call | valid {RESET}")
+            print(json.dumps(call.input, indent=2))
         except ValidationError as e:
-            print(tid, "| tool call | INVALID:", error_text(e))
-    print(f"total cost ${sum(COSTS):.4f}")
+            print(f"{CYAN}{tid} | tool call | INVALID: {RESET}")
+            print(error_text(e))
+            print(json.dumps(call.input, indent=2))
+    print(f"{CYAN}total cost ${sum(COSTS):.4f}{RESET}")
