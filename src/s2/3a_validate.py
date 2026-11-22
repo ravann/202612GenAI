@@ -76,6 +76,7 @@ if __name__ == "__main__":
     (res, err) = parse(not_json)
     print(f"{CYAN}--- not JSON {RESET}")
     print((err))                          # offline: no API call
+
     for tid in ["t1", "t5"]:
         ticket_parsed_raw = extract_once(TICKETS[tid])
         (data, err) = parse(ticket_parsed_raw)

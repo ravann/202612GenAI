@@ -53,7 +53,7 @@ def extract_once(content, system=SYSTEM, effort=None, **options):
         output_config["effort"] = effort               # low, medium, high (the default on Sonnet 5.5), xhigh or max
     started = time.perf_counter()
     resp = model.ask([{"role": "user", "content": content}],
-                     max_tokens=2000,                  # thinking tokens count against this
+                     max_tokens=4000,                  # thinking tokens count against this
                      output_config=output_config,
                      **options)
     model.report(resp, time.perf_counter() - started)
@@ -103,7 +103,7 @@ VARIANTS = {
 }
 
 if __name__ == "__main__":
-    for tid in ["t3", "t4", "t6"]:
+    for tid in ["t4"]:
         for name, options in VARIANTS.items():
             print(f"{CYAN}== {name} | {tid}{RESET}")
             data, err = parse(extract_once(TICKETS[tid], **options))
