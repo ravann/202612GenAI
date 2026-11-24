@@ -4,6 +4,8 @@ from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelConfig
 from extractor import Extractor
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 load_dotenv(find_dotenv())                             # as in 0_main.py: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -145,16 +147,18 @@ def first_reason(case_result):
 def main():
     report, path = evaluate()
     for c in report["cases"]:
-        print(f"{c['id']:10} {c['pass_rate']:.2f}  {first_reason(c)}")
-    print(report["summary"])
-    print("saved", path)
+        print(f"{CYAN}{c['id']:10} {c['pass_rate']:.2f}{RESET}")
+        if first_reason(c):
+            print(f"    {first_reason(c)}")
+    print(f"{CYAN}{report['summary']}{RESET}")
+    print(f"{CYAN}saved {path}{RESET}")
     failures = gate(report)
     if failures:
-        print("GATE FAILED")
+        print(f"{CYAN}GATE FAILED{RESET}")
         for f in failures:
-            print("  -", f)
+            print(f"{CYAN}  - {f}{RESET}")
         sys.exit(1)                                    # the exit code is the gate: 1 means do not ship
-    print("GATE PASSED")
+    print(f"{CYAN}GATE PASSED{RESET}")
     sys.exit(0)
 
 if __name__ == "__main__":
@@ -167,5 +171,6 @@ if __name__ == "__main__":
     for c in cases:
         total += c["pass_rate"]
     overall = total / len(cases)
-    print(f"overall {overall:.2f}:", gate({"summary": {"pass_rate": overall}, "cases": cases}))
+    failures = gate({"summary": {"pass_rate": overall}, "cases": cases})
+    print(f"{CYAN}overall {overall:.2f}: {failures}{RESET}")
     main()

@@ -1,6 +1,8 @@
 import json, re, sys
 from pathlib import Path
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 HERE = Path(__file__).parent
 
 def load_jsonl(path):
@@ -33,8 +35,8 @@ for prompt_file in prompt_files:
             hits.append(f"{prompt_file.name} contains test case {c['id']}")
 
 if hits:
-    print("LEAK:")
+    print(f"{CYAN}LEAK:{RESET}")
     for h in hits:
-        print("  " + h)
+        print(f"{CYAN}  {h}{RESET}")
     sys.exit(1)
-print("no test case appears in any prompt file")
+print(f"{CYAN}no test case appears in any prompt file{RESET}")

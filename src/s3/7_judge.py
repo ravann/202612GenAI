@@ -7,6 +7,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from anthropic import transform_schema
 from model_adapter import ModelAdapter, ModelConfig
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 load_dotenv(find_dotenv())                             # as in 0_main.py: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -73,7 +75,9 @@ if __name__ == "__main__":
         cost += c
         line = f"{row:2} {x['id']} human={x['human']:4} judge={v.verdict:4}"
         if v.verdict != x["human"]:
-            line += f" <- DISAGREE  {v.reasoning}"
-        print(line)
+            line += " <- DISAGREE"
+        print(f"{CYAN}{line}{RESET}")
+        if v.verdict != x["human"]:
+            print(f"    {v.reasoning}")
     agreement, k = kappa(human, judged)
-    print(f"agreement {agreement:.2f} | kappa {k:.2f} | {len(labels)} labels | judge cost ${cost:.4f}")
+    print(f"{CYAN}agreement {agreement:.2f} | kappa {k:.2f} | {len(labels)} labels | judge cost ${cost:.4f}{RESET}")

@@ -1,5 +1,7 @@
 import json, math, sys
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 def load(path):
     with open(path, encoding="utf-8") as f:
         return json.load(f)
@@ -27,7 +29,7 @@ for c in a["cases"]:
     marker = ""
     if before != after:
         marker = "   <- changed"
-    print(f"{c['id']:10} {shown(before)} -> {shown(after)}{marker}")
+    print(f"{CYAN}{c['id']:10} {shown(before)} -> {shown(after)}{marker}{RESET}")
 
 pa = a["summary"]["pass_rate"]
 pb = b["summary"]["pass_rate"]
@@ -41,6 +43,6 @@ if abs(pb - pa) <= noise:
     meaning = "inside the noise, not evidence"
 else:
     meaning = "larger than the noise"
-print(f"overall {pa:.2f} -> {pb:.2f}: difference {pb - pa:+.2f}, noise about +-{noise:.2f}: {meaning}")
-print(f"cost ${a['summary']['cost_usd']:.3f} -> ${b['summary']['cost_usd']:.3f} | "
-      f"repairs {a['summary']['repair_rate']:.2f} -> {b['summary']['repair_rate']:.2f}")
+print(f"{CYAN}overall {pa:.2f} -> {pb:.2f}: difference {pb - pa:+.2f}, noise about +-{noise:.2f}: {meaning}{RESET}")
+print(f"{CYAN}cost ${a['summary']['cost_usd']:.3f} -> ${b['summary']['cost_usd']:.3f} | "
+      f"repairs {a['summary']['repair_rate']:.2f} -> {b['summary']['repair_rate']:.2f}{RESET}")

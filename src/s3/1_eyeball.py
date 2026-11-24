@@ -4,6 +4,8 @@ from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelConfig
 from extractor import Extractor
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 load_dotenv(find_dotenv())                             # as in 0_main.py: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -34,7 +36,8 @@ def show(extractor, tid):
     priority = None
     if r["data"]:                                      # data is None when the extraction failed
         priority = r["data"]["priority"]
-    print(f"{r['prompt']} | {tid} | ok={r['ok']} | priority={priority} | review reasons={len(r['reasons'])}")
+    print(f"{CYAN}{r['prompt']} | {tid} | ok={r['ok']} | review reasons={len(r['reasons'])}{RESET}")
+    print(f"    priority={priority}")
 
 if __name__ == "__main__":
     for tid in ["t3", "t4", "t7"]:

@@ -1,6 +1,8 @@
 import os, sys
 from run_evals import HERE, evaluate, gate
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 FLIP = 0.6                     # a case flipped when its pass rate fell by more than half its runs, e.g. 3/3 to 1/3 or 0/3
 
 MUTANTS = [                                                    # each one is a way to break incident-v2 on purpose
@@ -24,18 +26,18 @@ def flipped_cases(base, report):
 
 if __name__ == "__main__":
     if not os.getenv("ANTHROPIC_API_KEY"):             # no key: the run cannot ask the question, so there is no verdict
-        print("NO VERDICT: ANTHROPIC_API_KEY is not set (expected in code/.env)")
+        print(f"{CYAN}NO VERDICT: ANTHROPIC_API_KEY is not set (expected in code/.env){RESET}")
         sys.exit(2)
     base, base_path = evaluate("incident-v2")
     if base["stopped"]:
         sys.exit(f"the baseline stopped early, so there is nothing to compare with: {base['stopped']}")
-    print(f"baseline pass {base['summary']['pass_rate']:.2f} | gate failures {len(gate(base))} | {base_path.name}")
+    print(f"{CYAN}baseline pass {base['summary']['pass_rate']:.2f} | gate failures {len(gate(base))} | {base_path.name}{RESET}")
     if gate(base):
-        print("  the baseline fails its own gate: a mutant 'caught' by the gate alone proves nothing")
+        print(f"{CYAN}  the baseline fails its own gate: a mutant 'caught' by the gate alone proves nothing{RESET}")
     for name, options in MUTANTS:
         report, path = evaluate(**options)             # each key of the dict becomes a keyword argument, e.g. delimit=False
         if report["stopped"]:
-            print(f"{name:24} NO VERDICT: {report['stopped']}")
+            print(f"{CYAN}{name:24} NO VERDICT: {report['stopped']}{RESET}")
             if "api failures" in report["stopped"]:    # the API itself is failing: the next mutants would fail the same way
                 break
         else:
@@ -45,6 +47,6 @@ if __name__ == "__main__":
                 result = "CAUGHT"
             else:
                 result = "MISSED"
-            print(f"{name:24} pass {report['summary']['pass_rate']:.2f} | gate failures {len(failures)} | flipped {flipped} | {result}")
+            print(f"{CYAN}{name:24} pass {report['summary']['pass_rate']:.2f} | gate failures {len(failures)} | flipped {flipped} | {result}{RESET}")
             for f in failures:
-                print("  -", f)
+                print(f"{CYAN}  - {f}{RESET}")

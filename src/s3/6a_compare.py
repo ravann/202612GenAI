@@ -5,6 +5,8 @@ from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelConfig
 from extractor import Extractor
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 load_dotenv(find_dotenv())                             # as in 0_main.py: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -177,23 +179,23 @@ def verdict(report):
     """Exit code: 0 gate passed, 1 gate failed, 2 no verdict because the run itself is not trustworthy."""
     s = report["summary"]
     if report["stopped"]:
-        print("NO VERDICT:", report["stopped"])
+        print(f"{CYAN}NO VERDICT: {report['stopped']}{RESET}")
         return 2
     if s["api_failures"] / s["runs"] > MAX_API_SHARE:
-        print(f"NO VERDICT: {s['api_failures']} of {s['runs']} runs failed at the API, not at the task")
+        print(f"{CYAN}NO VERDICT: {s['api_failures']} of {s['runs']} runs failed at the API, not at the task{RESET}")
         return 2
     failures = gate(report)
     if failures:
-        print("GATE FAILED")
+        print(f"{CYAN}GATE FAILED{RESET}")
         for f in failures:
-            print("  -", f)
+            print(f"{CYAN}  - {f}{RESET}")
         return 1
-    print("GATE PASSED")
+    print(f"{CYAN}GATE PASSED{RESET}")
     return 0
 
 def show(report, path):
     s = report["summary"]
-    print(f"{path.name}: pass {s['pass_rate']:.2f} | repairs {s['repair_rate']:.2f} | ${s['cost_usd']:.3f} | stopped={report['stopped']}")
+    print(f"{CYAN}{path.name}: pass {s['pass_rate']:.2f} | repairs {s['repair_rate']:.2f} | ${s['cost_usd']:.3f} | stopped={report['stopped']}{RESET}")
 
 def main():
     old, old_path = evaluate("incident-v1", delimit=False)          # two Extractors, one suite: nothing is edited between runs
@@ -203,7 +205,7 @@ def main():
     # a second model is a second config on the same prompt (instructor demo; the model needs a [prices] row):
     # cheap, cheap_path = evaluate("incident-v2", config=replace(CONFIG, model="claude-haiku-5-5"))
     # show(cheap, cheap_path)
-    print("next: python code/s3/6b_compare_reports.py <older report> <newer report>")
+    print(f"{CYAN}next: python code/s3/6b_compare_reports.py <older report> <newer report>{RESET}")
 
 if __name__ == "__main__":
     main()

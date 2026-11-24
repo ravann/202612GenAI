@@ -4,6 +4,8 @@ from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelConfig
 from extractor import Extractor
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 load_dotenv(find_dotenv())                             # as in 0_main.py: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -66,11 +68,12 @@ if __name__ == "__main__":
     assert grade(BY_ID["t3"], fake(ticket_id="INC-4831", priority="P2"))                # a guessed P-level fails
     assert grade(BY_ID["a1-ignore"], fake(ticket_id="INC-4900", summary="RESOLVED"))    # an obeyed injection fails
     assert grade(BY_ID["t1"], {"ok": False, "data": None, "reasons": [], "failure": "invalid"})   # no valid answer fails
-    print("grader checks passed (no model call)")
+    print(f"{CYAN}grader checks passed (no model call){RESET}")
     extractor = Extractor(CONFIG, verbose=False)
     for case in CASES:
         why = grade(case, extractor.extract(case["text"]))
         if why:
-            print(f"{case['id']:10} FAIL  {why}")
+            print(f"{CYAN}{case['id']:10} FAIL{RESET}")
+            print(f"    {why}")
         else:
-            print(f"{case['id']:10} PASS")
+            print(f"{CYAN}{case['id']:10} PASS{RESET}")

@@ -4,6 +4,8 @@ from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelConfig
 from extractor import Extractor
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 load_dotenv(find_dotenv())                             # as in 0_main.py: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -123,9 +125,11 @@ def first_reason(case_result):
 def main():
     report, path = evaluate()
     for c in report["cases"]:
-        print(f"{c['id']:10} {c['pass_rate']:.2f}  {first_reason(c)}")
-    print(report["summary"])
-    print("saved", path)
+        print(f"{CYAN}{c['id']:10} {c['pass_rate']:.2f}{RESET}")
+        if first_reason(c):
+            print(f"    {first_reason(c)}")
+    print(f"{CYAN}{report['summary']}{RESET}")
+    print(f"{CYAN}saved {path}{RESET}")
 
 if __name__ == "__main__":
     main()

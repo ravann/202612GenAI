@@ -4,6 +4,8 @@ from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelConfig
 from extractor import Extractor
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 # The .env file is in the code folder: find_dotenv() looks in this folder and then in each parent folder
 load_dotenv(find_dotenv())
 
@@ -26,9 +28,9 @@ def main():
             total += r["cost_usd"]
             cost = f"${r['cost_usd']:.4f}"
         status = "ok" if r["ok"] else f"FAILED ({r['failure']})"
-        print(f"{t['id']} | {status} | attempts={r['attempts']} | prompt={r['prompt']} | needs_review={bool(r['reasons'])} | {cost} | {r['seconds']:.1f}s")
+        print(f"{CYAN}{t['id']} | {status} | attempts={r['attempts']} | prompt={r['prompt']} | needs_review={bool(r['reasons'])} | {cost} | {r['seconds']:.1f}s{RESET}")
         print(f"    data={r['data']}\n    reasons={r['reasons']}")
-    print(f"total cost ${total:.4f}" + (f", plus {unknown} tickets of unknown cost" if unknown else ""))
+    print(f"{CYAN}total cost ${total:.4f}" + (f", plus {unknown} tickets of unknown cost" if unknown else "") + RESET)
 
 if __name__ == "__main__":
     if not os.getenv("ANTHROPIC_API_KEY"):   # otherwise the first request fails with a TypeError

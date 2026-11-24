@@ -4,6 +4,8 @@ from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelConfig
 from extractor import Extractor
 
+CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+
 load_dotenv(find_dotenv())                             # as in 0_main.py: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -176,18 +178,18 @@ def verdict(report):
     """Exit code: 0 gate passed, 1 gate failed, 2 no verdict because the run itself is not trustworthy."""
     s = report["summary"]
     if report["stopped"]:
-        print("NO VERDICT:", report["stopped"])
+        print(f"{CYAN}NO VERDICT: {report['stopped']}{RESET}")
         return 2
     if s["api_failures"] / s["runs"] > MAX_API_SHARE:
-        print(f"NO VERDICT: {s['api_failures']} of {s['runs']} runs failed at the API, not at the task")
+        print(f"{CYAN}NO VERDICT: {s['api_failures']} of {s['runs']} runs failed at the API, not at the task{RESET}")
         return 2
     failures = gate(report)
     if failures:
-        print("GATE FAILED")
+        print(f"{CYAN}GATE FAILED{RESET}")
         for f in failures:
-            print("  -", f)
+            print(f"{CYAN}  - {f}{RESET}")
         return 1
-    print("GATE PASSED")
+    print(f"{CYAN}GATE PASSED{RESET}")
     return 0
 
 def canned(cid, passed, k=3, critical=False):
@@ -209,7 +211,7 @@ def first_reason(case_result):
 
 def main():
     if not os.getenv("ANTHROPIC_API_KEY"):             # no key: the run cannot ask the question, so there is no verdict
-        print("NO VERDICT: ANTHROPIC_API_KEY is not set (expected in code/.env)")
+        print(f"{CYAN}NO VERDICT: ANTHROPIC_API_KEY is not set (expected in code/.env){RESET}")
         sys.exit(2)
     report, path = evaluate()
     for c in report["cases"]:
@@ -217,9 +219,11 @@ def main():
             shown = "n/a"                              # every run of this case failed at the API: nothing was graded
         else:
             shown = f"{c['pass_rate']:.2f}"
-        print(f"{c['id']:10} {shown}  {first_reason(c)}")
-    print(report["summary"])
-    print("saved", path)
+        print(f"{CYAN}{c['id']:10} {shown}{RESET}")
+        if first_reason(c):
+            print(f"    {first_reason(c)}")
+    print(f"{CYAN}{report['summary']}{RESET}")
+    print(f"{CYAN}saved {path}{RESET}")
     sys.exit(verdict(report))                          # the exit code is the gate: 0 ship, 1 do not ship, 2 no verdict
 
 if __name__ == "__main__":
@@ -232,5 +236,6 @@ if __name__ == "__main__":
     for c in cases:
         total += c["pass_rate"]
     overall = total / len(cases)
-    print(f"overall {overall:.2f}:", gate({"summary": {"pass_rate": overall}, "cases": cases}))
+    failures = gate({"summary": {"pass_rate": overall}, "cases": cases})
+    print(f"{CYAN}overall {overall:.2f}: {failures}{RESET}")
     main()
