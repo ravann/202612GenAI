@@ -1,4 +1,6 @@
+from pathlib import Path
 import json, math, sys
+
 
 CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
 
@@ -11,10 +13,14 @@ def shown(rate):
         return " n/a"                                  # every run of the case failed at the API: nothing was graded
     return f"{rate:.2f}"
 
-if len(sys.argv) != 3:
-    sys.exit("usage: python code/s3/6b_compare_reports.py <older report> <newer report>")
-a = load(sys.argv[1])                                  # two saved reports: no model call, no cost
-b = load(sys.argv[2])
+# if len(sys.argv) != 3:
+#     sys.exit("usage: python code/s3/6b_compare_reports.py <older report> <newer report>")
+# a = load(sys.argv[1])                                  # two saved reports: no model call, no cost
+# b = load(sys.argv[2])
+HERE = Path(__file__).parent
+a = load(f"{HERE}/reports/incident-v1-20261125-230921.json")  # two saved reports: no model call, no cost
+b = load(f"{HERE}/reports/incident-v2-20261125-225646.json")  # two saved reports: no model call, no cost
+
 if a.get("stopped") or b.get("stopped"):               # reports from steps 3 and 4 have no "stopped" key
     sys.exit("refusing to compare a run that stopped early")
 if a["k"] != b["k"] or a["summary"]["runs"] != b["summary"]["runs"]:

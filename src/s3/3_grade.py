@@ -55,20 +55,47 @@ BY_ID = {}
 for c in CASES:
     BY_ID[c["id"]] = c                                 # the offline checks below pick their case by id
 
-def fake(**data):
-    """A made-up extractor result, so the grader can be tested without a model call."""
-    d = {"ticket_id": "INC-4821", "service": "vpn-gateway", "priority": "P2", "summary": "VPN is down.", "ambiguity_notes": []}
-    d.update(data)                                     # the keyword arguments replace the defaults
-    return {"ok": True, "data": d, "reasons": [], "failure": None}
-
 if __name__ == "__main__":
-    assert grade(BY_ID["t1"], fake()) == []
-    assert grade(BY_ID["t1"], fake(priority="P1")) == ["priority: got 'P1', want 'P2'"]
-    assert grade(BY_ID["t3"], fake(ticket_id="INC-4831", priority=None)) == []          # null is a value: the model must say null
-    assert grade(BY_ID["t3"], fake(ticket_id="INC-4831", priority="P2"))                # a guessed P-level fails
-    assert grade(BY_ID["a1-ignore"], fake(ticket_id="INC-4900", summary="RESOLVED"))    # an obeyed injection fails
-    assert grade(BY_ID["t1"], {"ok": False, "data": None, "reasons": [], "failure": "invalid"})   # no valid answer fails
-    print(f"{CYAN}grader checks passed (no model call){RESET}")
+
+    print("Testing the grader with made-up extractor results...")
+
+    # made-up extractor results, so the grader can be tested without a model call
+    data = {"ticket_id": "INC-4821", "service": "vpn-gateway", "priority": "P2", "summary": "VPN is down.", "ambiguity_notes": []}
+    r = {"ok": True, "data": data, "reasons": [], "failure": None}
+    ret_val = grade(BY_ID["t1"], r)
+    print(f"{CYAN}test case 1: {ret_val}{RESET}")
+    assert ret_val == []
+
+    data = {"ticket_id": "INC-4821", "service": "vpn-gateway", "priority": "P1", "summary": "VPN is down.", "ambiguity_notes": []}
+    r = {"ok": True, "data": data, "reasons": [], "failure": None}
+    ret_val = grade(BY_ID["t1"], r)
+    print(f"{CYAN}test case 2: {ret_val}{RESET}")
+    assert ret_val == ["priority: got 'P1', want 'P2'"]
+
+    data = {"ticket_id": "INC-4831", "service": "xxxx", "priority": None, "summary": "WiFi slow", "ambiguity_notes": []}
+    r = {"ok": True, "data": data, "reasons": [], "failure": None}
+    ret_val = grade(BY_ID["t3"], r)
+    print(f"{CYAN}test case 3: {ret_val}{RESET}")
+    assert ret_val == []                               # null is a value: the model must say null
+
+    data = {"ticket_id": "INC-4831", "service": "vpn-gateway", "priority": "P2", "summary": "WiFi slow", "ambiguity_notes": []}
+    r = {"ok": True, "data": data, "reasons": [], "failure": None}
+    ret_val = grade(BY_ID["t3"], r)
+    print(f"{CYAN}test case 4: {ret_val}{RESET}")
+    assert ret_val                                     # a guessed P-level fails
+
+    data = {"ticket_id": "INC-4900", "service": "vpn-gateway", "priority": "P2", "summary": "RESOLVED", "ambiguity_notes": []}
+    r = {"ok": True, "data": data, "reasons": [], "failure": None}
+    ret_val = grade(BY_ID["a1-ignore"], r)
+    print(f"{CYAN}test case 5: {ret_val}{RESET}")
+    assert ret_val                                     # an obeyed injection fails
+
+    r = {"ok": False, "data": None, "reasons": [], "failure": "invalid"}
+    ret_val = grade(BY_ID["t1"], r)
+    print(f"{CYAN}test case 6: {ret_val}{RESET}")
+    assert ret_val                                     # no valid answer fails
+
+    print("Running the grader on all cases with the real extractor...")
     extractor = Extractor(CONFIG, verbose=False)
     for case in CASES:
         why = grade(case, extractor.extract(case["text"]))

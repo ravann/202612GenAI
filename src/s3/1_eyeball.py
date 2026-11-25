@@ -36,8 +36,8 @@ def show(extractor, tid):
     priority = None
     if r["data"]:                                      # data is None when the extraction failed
         priority = r["data"]["priority"]
-    print(f"{CYAN}{r['prompt']} | {tid} | ok={r['ok']} | review reasons={len(r['reasons'])}{RESET}")
-    print(f"    priority={priority}")
+    print(f"{CYAN}{r['prompt']} | {tid}{RESET}")
+    print(f"ok={r['ok']} | review reasons={len(r['reasons'])} | priority={priority}")
 
 if __name__ == "__main__":
     for tid in ["t3", "t4", "t7"]:

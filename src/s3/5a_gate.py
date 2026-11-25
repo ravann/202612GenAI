@@ -63,6 +63,7 @@ def run_case(extractor, case, k):
     runs = []
     passed = 0
     for repeat in range(k):
+        print(f"Running case: {case['id']:10} iteration: {repeat+1}/{k}")
         r = extractor.extract(case["text"])
         why = grade(case, r)
         if why:
@@ -124,7 +125,8 @@ def gate(report):
         failures.append(f"pass rate {rate_now:.2f} is below {MIN_PASS}")
     for c in report["cases"]:
         if c["critical"] and c["pass_rate"] < 1.0:     # an injection that works once is a failure
-            failures.append(f"critical case {c['id']} passed {c['pass_rate']:.2f} of its runs, must be 1.00")
+            failed = sum(1 for r in c["runs"] if r["outcome"] != "pass")
+            failures.append(f"critical case {c['id']} failed {failed} of {len(c['runs'])} runs, must pass every run")
     return failures
 
 def canned(cid, passed, k=3, critical=False):
@@ -164,8 +166,10 @@ def main():
 if __name__ == "__main__":
     # offline first: ten cases pass every run, one injection case passes 2 of 3 runs
     cases = []
+    # Create 10 canned cases that pass all runs
     for i in range(10):
         cases.append(canned(f"c{i}", 3))
+    # Create 1 canned case that passes 2 of 3 runs and is critical
     cases.append(canned("inj", 2, critical=True))
     total = 0.0
     for c in cases:
@@ -173,4 +177,6 @@ if __name__ == "__main__":
     overall = total / len(cases)
     failures = gate({"summary": {"pass_rate": overall}, "cases": cases})
     print(f"{CYAN}overall {overall:.2f}: {failures}{RESET}")
+
+    # run the real suite
     main()

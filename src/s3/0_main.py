@@ -14,7 +14,7 @@ PROMPT = "incident-v2"                       # change to "incident-v1" to roll b
 
 def main():
     tickets = [json.loads(line) for line in open(HERE / "tickets.jsonl", encoding="utf-8") if line.strip()]
-    ids = sys.argv[1:]                       # optional: python main.py t1 t5
+    ids = ["t1", "t2"]
     if ids:
         tickets = [t for t in tickets if t["id"] in ids]
     extractor = Extractor(ModelConfig.load(HERE / "model.toml"), prompt=PROMPT)

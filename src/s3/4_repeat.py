@@ -51,17 +51,14 @@ def grade(case, r):
         why.append("expected a review flag, got no reasons")
     return why
 
-K = 3                            # repeats per case; the first argument overrides it, e.g. 5
-if len(sys.argv) > 1:
-    K = int(sys.argv[1])
-PROMPT = "incident-v2"           # the prompt version under test; the second argument overrides it
-if len(sys.argv) > 2:
-    PROMPT = sys.argv[2]
+K = 3                            # repeats per case
+PROMPT = "incident-v2"           # the prompt version under test
 
 def run_case(extractor, case, k):
     runs = []
     passed = 0
     for repeat in range(k):
+        print(f"Running case: {case['id']:10} iteration: {repeat+1}/{k}")
         r = extractor.extract(case["text"])
         why = grade(case, r)
         if why:
