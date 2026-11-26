@@ -1,0 +1,15 @@
+[
+  {"id": "RB-01", "title": "VPN connection troubleshooting", "classification": "public", "service": "vpn-gateway", "owner": "network-team", "updated_at": "2026-09-14", "file": "RB-01.md"},
+  {"id": "RB-02", "title": "Account lockout and password reset", "classification": "public", "service": "all", "owner": "identity-team", "updated_at": "2026-08-30", "file": "RB-02.md"},
+  {"id": "RB-03", "title": "Mail relay queue backlog", "classification": "internal", "service": "mail-relay", "owner": "messaging-team", "updated_at": "2026-09-22", "file": "RB-03.md"},
+  {"id": "RB-04", "title": "Checkout latency investigation", "classification": "internal", "service": "checkout", "owner": "commerce-platform", "updated_at": "2026-10-02", "file": "RB-04.md"},
+  {"id": "RB-05", "title": "Change management policy", "classification": "internal", "service": "all", "owner": "change-advisory-board", "updated_at": "2026-07-01", "file": "RB-05.md"},
+  {"id": "RB-06", "title": "Orders database failover (db-04 to db-05)", "classification": "internal", "service": "checkout", "owner": "dba-team", "updated_at": "2026-09-05", "file": "RB-06.md"},
+  {"id": "RB-07", "title": "Payroll portal HTTP 500 errors", "classification": "internal", "service": "payroll-portal", "owner": "hr-systems", "updated_at": "2026-09-18", "file": "RB-07.md"},
+  {"id": "RB-08", "title": "Slow CRM customer search", "classification": "internal", "service": "crm", "owner": "crm-team", "updated_at": "2026-09-27", "file": "RB-08.md"},
+  {"id": "RB-09", "title": "Incident priority matrix and escalation", "classification": "public", "service": "all", "owner": "service-desk", "updated_at": "2026-06-15", "file": "RB-09.md"},
+  {"id": "RB-10", "title": "Break-glass emergency access", "classification": "restricted", "service": "all", "owner": "security-office", "updated_at": "2026-08-12", "file": "RB-10.md"},
+  {"id": "RB-11", "title": "Security incident response", "classification": "restricted", "service": "all", "owner": "security-office", "updated_at": "2026-08-12", "file": "RB-11.md"},
+  {"id": "RB-12", "title": "Legal hold on mailboxes", "classification": "restricted", "service": "mail-relay", "owner": "legal-ops", "updated_at": "2026-07-20", "file": "RB-12.md"},
+  {"id": "RB-99", "title": "Printer queue troubleshooting", "classification": "internal", "service": "printer-queue", "owner": "workplace-it", "updated_at": "2026-10-03", "file": "RB-99.md"}
+]

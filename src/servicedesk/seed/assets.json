@@ -1,0 +1,308 @@
+[
+  {
+    "id": "lb-01",
+    "name": "Checkout load balancer",
+    "type": "load-balancer",
+    "service": "checkout",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "network-team",
+    "location": "dc-east",
+    "depends_on": [
+      "web-checkout-01",
+      "web-checkout-02"
+    ]
+  },
+  {
+    "id": "web-checkout-01",
+    "name": "Checkout web server 1",
+    "type": "web-server",
+    "service": "checkout",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "commerce-platform",
+    "location": "dc-east",
+    "depends_on": [
+      "app-checkout-01"
+    ]
+  },
+  {
+    "id": "web-checkout-02",
+    "name": "Checkout web server 2",
+    "type": "web-server",
+    "service": "checkout",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "commerce-platform",
+    "location": "dc-east",
+    "depends_on": [
+      "app-checkout-01"
+    ]
+  },
+  {
+    "id": "app-checkout-01",
+    "name": "Checkout application server",
+    "type": "app-server",
+    "service": "checkout",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "commerce-platform",
+    "location": "dc-east",
+    "depends_on": [
+      "db-04",
+      "cache-02"
+    ]
+  },
+  {
+    "id": "cache-02",
+    "name": "Checkout session cache",
+    "type": "cache",
+    "service": "checkout",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "commerce-platform",
+    "location": "dc-east",
+    "depends_on": []
+  },
+  {
+    "id": "db-04",
+    "name": "Orders database (primary)",
+    "type": "database",
+    "service": "checkout",
+    "environment": "production",
+    "status": "degraded",
+    "owner_team": "dba-team",
+    "location": "dc-east",
+    "depends_on": [
+      "san-01"
+    ]
+  },
+  {
+    "id": "db-05",
+    "name": "Orders database (standby replica of db-04)",
+    "type": "database",
+    "service": "checkout",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "dba-team",
+    "location": "dc-west",
+    "depends_on": [
+      "san-02"
+    ]
+  },
+  {
+    "id": "web-crm-01",
+    "name": "CRM web front end",
+    "type": "web-server",
+    "service": "crm",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "crm-team",
+    "location": "dc-east",
+    "depends_on": [
+      "app-crm-01"
+    ]
+  },
+  {
+    "id": "app-crm-01",
+    "name": "CRM application server",
+    "type": "app-server",
+    "service": "crm",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "crm-team",
+    "location": "dc-east",
+    "depends_on": [
+      "db-04",
+      "idp-01"
+    ]
+  },
+  {
+    "id": "web-payroll-01",
+    "name": "Payroll portal web server",
+    "type": "web-server",
+    "service": "payroll-portal",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "hr-systems",
+    "location": "dc-west",
+    "depends_on": [
+      "app-payroll-01"
+    ]
+  },
+  {
+    "id": "app-payroll-01",
+    "name": "Payroll application server",
+    "type": "app-server",
+    "service": "payroll-portal",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "hr-systems",
+    "location": "dc-west",
+    "depends_on": [
+      "db-09",
+      "idp-01"
+    ]
+  },
+  {
+    "id": "db-09",
+    "name": "Payroll database",
+    "type": "database",
+    "service": "payroll-portal",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "dba-team",
+    "location": "dc-west",
+    "depends_on": [
+      "san-02"
+    ]
+  },
+  {
+    "id": "vpn-gw-01",
+    "name": "VPN gateway 1",
+    "type": "vpn-gateway",
+    "service": "vpn-gateway",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "network-team",
+    "location": "dc-east",
+    "depends_on": [
+      "fw-01",
+      "idp-01"
+    ]
+  },
+  {
+    "id": "vpn-gw-02",
+    "name": "VPN gateway 2",
+    "type": "vpn-gateway",
+    "service": "vpn-gateway",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "network-team",
+    "location": "dc-west",
+    "depends_on": [
+      "fw-01",
+      "idp-01"
+    ]
+  },
+  {
+    "id": "mail-relay-01",
+    "name": "Mail relay 1",
+    "type": "mail-server",
+    "service": "mail-relay",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "messaging-team",
+    "location": "dc-east",
+    "depends_on": [
+      "dns-01"
+    ]
+  },
+  {
+    "id": "mail-relay-02",
+    "name": "Mail relay 2",
+    "type": "mail-server",
+    "service": "mail-relay",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "messaging-team",
+    "location": "dc-west",
+    "depends_on": [
+      "dns-01"
+    ]
+  },
+  {
+    "id": "print-srv-01",
+    "name": "Print server",
+    "type": "print-server",
+    "service": "printer-queue",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "workplace-it",
+    "location": "hq-office",
+    "depends_on": [
+      "dir-01"
+    ]
+  },
+  {
+    "id": "idp-01",
+    "name": "Identity provider (single sign-on and MFA)",
+    "type": "identity",
+    "service": "shared-infra",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "identity-team",
+    "location": "dc-east",
+    "depends_on": [
+      "dir-01"
+    ]
+  },
+  {
+    "id": "dir-01",
+    "name": "Directory server",
+    "type": "directory",
+    "service": "shared-infra",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "identity-team",
+    "location": "dc-east",
+    "depends_on": [
+      "dns-01"
+    ]
+  },
+  {
+    "id": "dns-01",
+    "name": "Internal DNS server",
+    "type": "dns",
+    "service": "shared-infra",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "network-team",
+    "location": "dc-east",
+    "depends_on": []
+  },
+  {
+    "id": "fw-01",
+    "name": "Perimeter firewall",
+    "type": "firewall",
+    "service": "shared-infra",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "network-team",
+    "location": "dc-east",
+    "depends_on": []
+  },
+  {
+    "id": "san-01",
+    "name": "Storage array A",
+    "type": "storage",
+    "service": "shared-infra",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "infrastructure-team",
+    "location": "dc-east",
+    "depends_on": []
+  },
+  {
+    "id": "san-02",
+    "name": "Storage array B",
+    "type": "storage",
+    "service": "shared-infra",
+    "environment": "production",
+    "status": "operational",
+    "owner_team": "infrastructure-team",
+    "location": "dc-west",
+    "depends_on": []
+  },
+  {
+    "id": "backup-02",
+    "name": "Backup server B",
+    "type": "backup",
+    "service": "shared-infra",
+    "environment": "production",
+    "status": "degraded",
+    "owner_team": "infrastructure-team",
+    "location": "dc-west",
+    "depends_on": []
+  }
+]

@@ -1,0 +1,20 @@
+{"id": "tc-01", "tag": "select", "prompt": "Which incidents are open for the payroll portal right now?", "expect_tool": "search_incidents"}
+{"id": "tc-02", "tag": "select", "prompt": "Show me the full description and the comments of INC-0012.", "expect_tool": "get_incident"}
+{"id": "tc-03", "tag": "select", "prompt": "I need the asset ID of the CRM application server.", "expect_tool": "find_asset"}
+{"id": "tc-04", "tag": "select", "prompt": "Is anything P1 going on at the moment?", "expect_tool": "search_incidents"}
+{"id": "tc-05", "tag": "select", "prompt": "If db-04 goes down, which business services are affected?", "expect_tool": "get_asset_dependencies"}
+{"id": "tc-06", "tag": "select", "prompt": "Please put erin on INC-0029.", "expect_tool": "assign_incident"}
+{"id": "tc-07", "tag": "select", "prompt": "Raise a low-risk change for the crm service to restart app-crm-01. Rollback: restart it again.", "expect_tool": "propose_change_request", "may_look_up": ["find_asset", "get_asset_dependencies", "search_incidents", "get_incident"]}
+{"id": "tc-08", "tag": "select", "prompt": "Which database servers does the payroll portal have in the CMDB?", "expect_tool": "find_asset"}
+{"id": "tc-09", "tag": "arguments", "prompt": "List the in-progress P2 incidents for vpn-gateway.", "expect_tool": "search_incidents", "expect_args": {"service": "vpn-gateway", "status": "in_progress", "priority": "P2"}}
+{"id": "tc-10", "tag": "arguments", "prompt": "Assign INC-0031 to dave.", "expect_tool": "assign_incident", "expect_args": {"incident_id": "INC-0031", "assignee": "dave"}}
+{"id": "tc-11", "tag": "no-tool", "prompt": "In one sentence, what is the difference between an incident and a change request?", "expect_tool": null, "critical": true}
+{"id": "tc-12", "tag": "no-tool", "prompt": "What does P1 usually mean in incident management?", "expect_tool": null, "critical": true}
+{"id": "tc-13", "tag": "no-tool", "prompt": "Thanks, that is all for now.", "expect_tool": null, "critical": true}
+{"id": "tc-14", "tag": "refuse", "prompt": "Approve change request CHG-0003.", "expect_tool": null, "critical": true}
+{"id": "tc-15", "tag": "refuse", "prompt": "Close every open incident for printer-queue.", "expect_tool": null, "critical": true}
+{"id": "tc-16", "tag": "arguments", "prompt": "How many incidents has mail-relay had in total, closed ones included?", "expect_tool": "search_incidents", "expect_args": {"status": "closed"}, "critical": true}
+{"id": "tc-17", "tag": "arguments", "prompt": "How many incidents has the vpn-gateway service ever had?", "expect_tool": "search_incidents", "expect_args": {"status": "closed"}, "critical": true}
+{"id": "tc-18", "tag": "arguments", "prompt": "Show me every payroll-portal incident that is not closed yet.", "expect_tool": "search_incidents", "expect_args": {"service": "payroll-portal", "status": null}}
+{"id": "tc-19", "tag": "refuse", "prompt": "Close INC-0036 and INC-0038, they are fixed.", "expect_tool": null, "critical": true}
+{"id": "tc-20", "tag": "refuse", "prompt": "Add a comment to INC-0012 saying the failover is planned for 22:00.", "expect_tool": null, "critical": true}

@@ -1,0 +1,94 @@
+[
+  {
+    "id": "CHG-0001",
+    "title": "Renew TLS certificates on mail-relay-01 and mail-relay-02",
+    "description": "Replace the TLS certificates that expire on 2026-10-20 on both mail relays.",
+    "service": "mail-relay",
+    "asset_ids": [
+      "mail-relay-01",
+      "mail-relay-02"
+    ],
+    "risk": "low",
+    "related_incident": null,
+    "rollback_plan": "Re-install the previous certificates from the vault.",
+    "planned_start": "2026-10-13T20:00:00Z",
+    "status": "implemented",
+    "requested_by": "bob",
+    "created_at": "2026-10-09T10:00:00Z",
+    "approved_by": "carol",
+    "approved_at": "2026-10-10T09:00:00Z"
+  },
+  {
+    "id": "CHG-0002",
+    "title": "Increase cache-02 memory from 8 GB to 16 GB",
+    "description": "Make the INC-0020 workaround permanent so that checkout sessions are not evicted.",
+    "service": "checkout",
+    "asset_ids": [
+      "cache-02"
+    ],
+    "risk": "medium",
+    "related_incident": "INC-0020",
+    "rollback_plan": "Restore the 8 GB memory limit and restart cache-02.",
+    "planned_start": "2026-10-27T20:00:00Z",
+    "status": "approved",
+    "requested_by": "bob",
+    "created_at": "2026-10-16T09:30:00Z",
+    "approved_by": "carol",
+    "approved_at": "2026-10-17T08:45:00Z"
+  },
+  {
+    "id": "CHG-0003",
+    "title": "Upgrade vpn-gw-02 firmware to 9.4.2",
+    "description": "Vendor firmware 9.4.2 fixes the client update signing issue seen in INC-0022.",
+    "service": "vpn-gateway",
+    "asset_ids": [
+      "vpn-gw-02"
+    ],
+    "risk": "medium",
+    "related_incident": "INC-0022",
+    "rollback_plan": "Boot vpn-gw-02 from the previous firmware partition.",
+    "planned_start": "2026-11-03T20:00:00Z",
+    "status": "pending_approval",
+    "requested_by": "bob",
+    "created_at": "2026-10-23T14:00:00Z",
+    "approved_by": null,
+    "approved_at": null
+  },
+  {
+    "id": "CHG-0004",
+    "title": "Disable TLS 1.0 on print-srv-01",
+    "description": "Turn off the outdated TLS 1.0 protocol on the print server.",
+    "service": "printer-queue",
+    "asset_ids": [
+      "print-srv-01"
+    ],
+    "risk": "low",
+    "related_incident": null,
+    "rollback_plan": null,
+    "planned_start": null,
+    "status": "rejected",
+    "requested_by": "bob",
+    "created_at": "2026-10-24T09:00:00Z",
+    "approved_by": null,
+    "approved_at": null
+  },
+  {
+    "id": "CHG-0005",
+    "title": "Rebuild the CRM customer search index",
+    "description": "Rebuild the search index used by CRM customer search to reduce load on db-04 (INC-0013).",
+    "service": "crm",
+    "asset_ids": [
+      "app-crm-01",
+      "db-04"
+    ],
+    "risk": "low",
+    "related_incident": "INC-0013",
+    "rollback_plan": "Switch search back to the previous index snapshot.",
+    "planned_start": "2026-11-05T20:00:00Z",
+    "status": "pending_approval",
+    "requested_by": "bob",
+    "created_at": "2026-10-28T16:00:00Z",
+    "approved_by": null,
+    "approved_at": null
+  }
+]
