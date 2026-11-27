@@ -1,0 +1,2 @@
+{"id": "n1-no-id", "text": "The HR portal is down, nobody can log in.", "expect": {"ticket_id": null, "priority": null}}
+{"id": "n2-vague", "text": "Everything feels slow today. Please look into it.", "expect": {"ticket_id": null, "service": null, "priority": null}}
