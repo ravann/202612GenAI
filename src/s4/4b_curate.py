@@ -2,6 +2,10 @@ import json, sys
 from pathlib import Path
 from servicedesk_tools import TOOLS
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 # Generate, then curate: decide for every ServiceDesk operation whether the agent gets it as it is (expose),
 # as a narrower task-level tool (wrap), or not at all (hide). No model call and no ServiceDesk call.
 
@@ -43,23 +47,23 @@ if __name__ == "__main__":
         curated[tool["name"]] = tool
 
     counts = {"expose": 0, "wrap": 0, "hide": 0}
-    print(f"{'operation':23} {'HTTP':39} {'decision':8} {'curated tool':23} reason")
+    print(f"{CYAN}{'operation':23} {'HTTP':39} {'decision':8} {'curated tool':23} reason{RESET}")
     for d in drafts:
         if d["name"] not in DECISIONS:                 # a new operation in the API: someone must decide, not default
-            print(f"{d['name']:23} {d['x-http']:39} NO DECISION YET")
+            print(f"{CYAN}{d['name']:23} {d['x-http']:39} NO DECISION YET{RESET}")
             continue
         decision, tool_name, reason = DECISIONS[d["name"]]
         counts[decision] += 1
-        print(f"{d['name']:23} {d['x-http']:39} {decision:8} {tool_name:23} {reason}")
-    print(f"{len(drafts)} drafts: {counts['expose']} exposed, {counts['wrap']} wrapped, {counts['hide']} hidden. "
-          f"Curated tools in servicedesk_tools.py: {len(TOOLS)}")
-    print(f"approve_change is a draft: {'approve_change' in drafts_by_name}. "
-          f"It is a curated tool: {'approve_change' in curated}")
+        print(f"{CYAN}{d['name']:23} {d['x-http']:39} {decision:8} {tool_name:23} {reason}{RESET}")
+    print(f"{CYAN}{len(drafts)} drafts: {counts['expose']} exposed, {counts['wrap']} wrapped, {counts['hide']} hidden. "
+          f"Curated tools in servicedesk_tools.py: {len(TOOLS)}{RESET}")
+    print(f"{CYAN}approve_change is a draft: {'approve_change' in drafts_by_name}. "
+          f"It is a curated tool: {'approve_change' in curated}{RESET}")
 
     print()
-    print("Before and after, for two operations (characters the model reads, and the properties it may fill in)")
+    print(f"{CYAN}Before and after, for two operations (characters the model reads, and the properties it may fill in){RESET}")
     for draft_name, tool_name in [("list_incidents", "search_incidents"), ("create_change", "propose_change_request")]:
         draft = drafts_by_name[draft_name]
         tool = curated[tool_name]
-        print(f"  draft   {draft_name:23} {size(draft):5}  {list(draft['input_schema']['properties'])}")
-        print(f"  curated {tool_name:23} {size(tool):5}  {list(tool['input_schema']['properties'])}")
+        print(f"{CYAN}  draft   {draft_name:23} {size(draft):5}  {list(draft['input_schema']['properties'])}{RESET}")
+        print(f"{CYAN}  curated {tool_name:23} {size(tool):5}  {list(tool['input_schema']['properties'])}{RESET}")

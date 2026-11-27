@@ -1,0 +1,2273 @@
+{
+  "info": {
+    "name": "ServiceDesk API",
+    "description": "Requests and tests for the ServiceDesk mock (src/servicedesk/app.py).\n\nStart the service with `python src/servicedesk/app.py`, then run the collection in order (Collection Runner). Folder 00 resets the seed data so results are repeatable.\n\nSelect the \"ServiceDesk Local\" environment (ServiceDesk.postman_environment.json) before running: it holds requesterToken, engineerToken and changeManagerToken (from README.md). Each request picks the least-privileged token it needs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{engineerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "badToken",
+      "value": "not-a-real-token"
+    },
+    {
+      "key": "newIncidentId",
+      "value": ""
+    },
+    {
+      "key": "idemIncidentId",
+      "value": ""
+    },
+    {
+      "key": "incKey",
+      "value": ""
+    },
+    {
+      "key": "newChangeId",
+      "value": ""
+    },
+    {
+      "key": "chgKey",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 Setup",
+      "item": [
+        {
+          "name": "Reset seed data",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_admin/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_admin",
+                "reset"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Seed counts\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.incidents).to.eql(42);",
+                  "    pm.expect(b.assets).to.eql(24);",
+                  "    pm.expect(b.changes).to.eql(5);",
+                  "    pm.expect(b.runbooks).to.eql(13);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "OpenAPI document (no token)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has 16 operations\", () => {",
+                  "    const paths = pm.response.json().paths;",
+                  "    let n = 0;",
+                  "    Object.values(paths).forEach(p => n += Object.keys(p).length);",
+                  "    pm.expect(n).to.eql(16);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 Incidents",
+      "item": [
+        {
+          "name": "List incidents (default, not closed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"No closed incidents, at most 20\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.returned).to.be.at.most(20);",
+                  "    b.incidents.forEach(i => pm.expect(i.status).to.not.eql(\"closed\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List P1 checkout incidents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents?priority=P1&service=checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ],
+              "query": [
+                {
+                  "key": "priority",
+                  "value": "P1"
+                },
+                {
+                  "key": "service",
+                  "value": "checkout"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"All P1 checkout\", () => {",
+                  "    pm.response.json().incidents.forEach(i => {",
+                  "        pm.expect(i.priority).to.eql(\"P1\");",
+                  "        pm.expect(i.service).to.eql(\"checkout\");",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List closed incidents (limit 5)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents?status=closed&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "closed"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"All closed, at most 5\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.returned).to.be.at.most(5);",
+                  "    b.incidents.forEach(i => pm.expect(i.status).to.eql(\"closed\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List incidents for asset db-04",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents?asset_id=db-04",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ],
+              "query": [
+                {
+                  "key": "asset_id",
+                  "value": "db-04"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Every incident involves db-04\", () => {",
+                  "    pm.response.json().incidents.forEach(i => pm.expect(i.asset_ids).to.include(\"db-04\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get INC-0012",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents/INC-0012",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "INC-0012"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Open P1 on db-04 with comments\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.id).to.eql(\"INC-0012\");",
+                  "    pm.expect(b.priority).to.eql(\"P1\");",
+                  "    pm.expect(b.asset_ids).to.include(\"db-04\");",
+                  "    pm.expect(b.comments).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create incident",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Printer queue stuck on floor 3\",\n  \"description\": \"Jobs sent to the floor 3 printer stay queued since 09:00. About 15 users affected.\",\n  \"service\": \"printer-queue\",\n  \"priority\": \"P3\",\n  \"asset_ids\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Created open, reported by bob\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.status).to.eql(\"open\");",
+                  "    pm.expect(b.reporter).to.eql(\"bob\");",
+                  "    pm.collectionVariables.set(\"newIncidentId\", b.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update incident (status + assignee)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidents/{{newIncidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "{{newIncidentId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"assignee\": \"bob\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Updated\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.status).to.eql(\"in_progress\");",
+                  "    pm.expect(b.assignee).to.eql(\"bob\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidents/{{newIncidentId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "{{newIncidentId}}",
+                "comments"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Restarted the spooler; monitoring.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Comment by bob\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.author).to.eql(\"bob\");",
+                  "    pm.expect(b.id).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get new incident (has comment)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents/{{newIncidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "{{newIncidentId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"One comment present\", () => pm.expect(pm.response.json().comments.length).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create incident with Idempotency-Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{incKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Payroll portal shows HTTP 500\",\n  \"description\": \"Payslip page returns 500 for all users.\",\n  \"service\": \"payroll-portal\",\n  \"priority\": \"P2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idemIncidentId\", pm.response.json().id);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"incKey\", \"inc-\" + Date.now());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Replay incident Idempotency-Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{incKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Payroll portal shows HTTP 500\",\n  \"description\": \"Payslip page returns 500 for all users.\",\n  \"service\": \"payroll-portal\",\n  \"priority\": \"P2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Replayed same incident\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Idempotent-Replayed\")).to.eql(\"true\");",
+                  "    pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"idemIncidentId\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Assets (CMDB)",
+      "item": [
+        {
+          "name": "Search assets by text",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assets?q=db",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "db"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Matches contain 'db'\", () => {",
+                  "    pm.response.json().assets.forEach(a => pm.expect((a.id + \" \" + a.name).toLowerCase()).to.include(\"db\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter assets by service and type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assets?service=checkout&type=database",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "service",
+                  "value": "checkout"
+                },
+                {
+                  "key": "type",
+                  "value": "database"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"All checkout databases\", () => {",
+                  "    pm.response.json().assets.forEach(a => {",
+                  "        pm.expect(a.service).to.eql(\"checkout\");",
+                  "        pm.expect(a.type).to.eql(\"database\");",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get asset db-04",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assets/db-04",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assets",
+                "db-04"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Is db-04\", () => pm.expect(pm.response.json().id).to.eql(\"db-04\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get db-04 dependencies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assets/db-04/dependencies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assets",
+                "db-04",
+                "dependencies"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Impacts checkout and crm\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.impacted_services).to.include.members([\"checkout\", \"crm\"]);",
+                  "    pm.expect(b.used_by.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Changes",
+      "item": [
+        {
+          "name": "List changes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has changes\", () => pm.expect(pm.response.json().total).to.be.at.least(5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List pending changes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/changes?status=pending_approval",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changes"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending_approval"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"All pending\", () => pm.response.json().changes.forEach(c => pm.expect(c.status).to.eql(\"pending_approval\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get CHG-0003",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/changes/CHG-0003",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changes",
+                "CHG-0003"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Is CHG-0003\", () => pm.expect(pm.response.json().id).to.eql(\"CHG-0003\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create change (engineer, with Idempotency-Key)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{chgKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Fail over db-04 to db-05\",\n  \"description\": \"Move the orders database to the standby to relieve INC-0012 latency.\",\n  \"service\": \"checkout\",\n  \"risk\": \"high\",\n  \"asset_ids\": [\n    \"db-04\",\n    \"db-05\"\n  ],\n  \"related_incident\": \"INC-0012\",\n  \"rollback_plan\": \"Fail back to db-04 following RB-06.\",\n  \"planned_start\": \"2026-12-01T20:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Starts pending_approval\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.status).to.eql(\"pending_approval\");",
+                  "    pm.expect(b.requested_by).to.eql(\"bob\");",
+                  "    pm.collectionVariables.set(\"newChangeId\", b.id);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"chgKey\", \"chg-\" + Date.now());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Replay change Idempotency-Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{chgKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Fail over db-04 to db-05\",\n  \"description\": \"Move the orders database to the standby to relieve INC-0012 latency.\",\n  \"service\": \"checkout\",\n  \"risk\": \"high\",\n  \"asset_ids\": [\n    \"db-04\",\n    \"db-05\"\n  ],\n  \"related_incident\": \"INC-0012\",\n  \"rollback_plan\": \"Fail back to db-04 following RB-06.\",\n  \"planned_start\": \"2026-12-01T20:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Replayed same change\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Idempotent-Replayed\")).to.eql(\"true\");",
+                  "    pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"newChangeId\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reuse Idempotency-Key with different body -> 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{chgKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Fail over db-04 to db-05\",\n  \"description\": \"Move the orders database to the standby to relieve INC-0012 latency.\",\n  \"service\": \"checkout\",\n  \"risk\": \"low\",\n  \"asset_ids\": [\n    \"db-04\",\n    \"db-05\"\n  ],\n  \"related_incident\": \"INC-0012\",\n  \"rollback_plan\": \"Fail back to db-04 following RB-06.\",\n  \"planned_start\": \"2026-12-01T20:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve change as engineer -> 403",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/changes/{{newChangeId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changes",
+                "{{newChangeId}}",
+                "approve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Error body has error/detail/hint\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b).to.have.keys(\"error\", \"detail\", \"hint\");",
+                  "    pm.expect(b.error).to.eql(\"forbidden\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve change as change manager",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/changes/{{newChangeId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changes",
+                "{{newChangeId}}",
+                "approve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{changeManagerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Approved by carol\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b.status).to.eql(\"approved\");",
+                  "    pm.expect(b.approved_by).to.eql(\"carol\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve again -> 409",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/changes/{{newChangeId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "changes",
+                "{{newChangeId}}",
+                "approve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{changeManagerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Runbooks",
+      "item": [
+        {
+          "name": "List runbooks as requester (no restricted)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/runbooks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runbooks"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"No restricted runbooks\", () => pm.response.json().runbooks.forEach(r => pm.expect(r.classification).to.not.eql(\"restricted\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List runbooks as change manager (all 13)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/runbooks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runbooks"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{changeManagerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"13 runbooks\", () => pm.expect(pm.response.json().total).to.eql(13));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search runbooks by text",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/runbooks?q=VPN-809",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runbooks"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "VPN-809"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter runbooks by service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/runbooks?service=checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runbooks"
+              ],
+              "query": [
+                {
+                  "key": "service",
+                  "value": "checkout"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get RB-06",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/runbooks/RB-06",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runbooks",
+                "RB-06"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has Markdown body\", () => pm.expect(pm.response.json().body).to.be.a(\"string\").and.not.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get restricted RB-10 as engineer -> 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/runbooks/RB-10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runbooks",
+                "RB-10"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Error body has error/detail/hint\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b).to.have.keys(\"error\", \"detail\", \"hint\");",
+                  "    pm.expect(b.error).to.eql(\"forbidden\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get restricted RB-10 as change manager",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/runbooks/RB-10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runbooks",
+                "RB-10"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{changeManagerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Auth & errors",
+      "item": [
+        {
+          "name": "No token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{badToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Requester creates incident -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Should not be created\",\n  \"description\": \"x\",\n  \"service\": \"crm\",\n  \"priority\": \"P4\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Error body has error/detail/hint\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b).to.have.keys(\"error\", \"detail\", \"hint\");",
+                  "    pm.expect(b.error).to.eql(\"forbidden\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown incident -> 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents/INC-9999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "INC-9999"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error body has error/detail/hint\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b).to.have.keys(\"error\", \"detail\", \"hint\");",
+                  "    pm.expect(b.error).to.eql(\"not_found\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown asset -> 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assets/nope-99",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assets",
+                "nope-99"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error body has error/detail/hint\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b).to.have.keys(\"error\", \"detail\", \"hint\");",
+                  "    pm.expect(b.error).to.eql(\"not_found\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid priority -> 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Bad priority test\",\n  \"description\": \"x\",\n  \"service\": \"crm\",\n  \"priority\": \"P9\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error body has error/detail/hint\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b).to.have.keys(\"error\", \"detail\", \"hint\");",
+                  "    pm.expect(b.error).to.eql(\"invalid_request\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Empty PATCH body -> 422",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidents/INC-0012",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "INC-0012"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error body has error/detail/hint\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b).to.have.keys(\"error\", \"detail\", \"hint\");",
+                  "    pm.expect(b.error).to.eql(\"invalid_request\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "limit out of range -> 422",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents?limit=500",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "500"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error body has error/detail/hint\", () => {",
+                  "    const b = pm.response.json();",
+                  "    pm.expect(b).to.have.keys(\"error\", \"detail\", \"hint\");",
+                  "    pm.expect(b.error).to.eql(\"invalid_request\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 Fault injection",
+      "item": [
+        {
+          "name": "Inject 503 on every request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_admin/faults",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_admin",
+                "faults"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": 503,\n  \"rate\": 1.0,\n  \"latency_ms\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Call while faulted -> 503 with Retry-After",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assets"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 503\", () => pm.response.to.have.status(503));",
+                  "pm.test(\"Retry-After header\", () => pm.expect(pm.response.headers.has(\"Retry-After\")).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Inject 429 on half + 500 ms latency",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_admin/faults",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_admin",
+                "faults"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": 429,\n  \"rate\": 0.5,\n  \"latency_ms\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Call while rate-limited (run twice)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assets"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{requesterToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 or 429\", () => pm.expect(pm.response.code).to.be.oneOf([200, 429]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Switch faults off",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/_admin/faults",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_admin",
+                "faults"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": null,\n  \"rate\": 0,\n  \"latency_ms\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset seed data (cleanup)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/_admin/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "_admin",
+                "reset"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

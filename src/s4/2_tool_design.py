@@ -6,6 +6,10 @@ import jsonschema
 from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 load_dotenv(find_dotenv())                             # as in Session 3: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -234,24 +238,24 @@ def first_choice(model, tools, question):
 if __name__ == "__main__":
     reset_servicedesk()                                # parts 2 and 3 need ServiceDesk: stop now, before any paid call
     model = ModelAdapter(replace(CONFIG, system=SYSTEM))
-    print("1. Which tool would the model call first? (one call per line, no tool runs)")
+    print(f"{CYAN}1. Which tool would the model call first? (one call per line, no tool runs){RESET}")
     total = 0.0
     for question in QUESTIONS:
-        print("USER:", question)
+        print(f"{CYAN}USER: {question}{RESET}")
         for label, tools in [("weak", WEAK_TOOLS), ("agent-ready", TOOLS)]:
             choice, cost = first_choice(model, tools, question)
-            print(f"   {label:12} {choice}")
+            print(f"{CYAN}   {label:12}{RESET} {GREEN}{choice}{RESET}")
             if cost is not None:
                 total += cost
-    print(f"   [{2 * len(QUESTIONS)} model calls | ${total:.4f}]")
+    print(f"{CYAN}   [{2 * len(QUESTIONS)} model calls | ${total:.4f}]{RESET}")
 
-    print("2. Right-sized output")
+    print(f"{CYAN}2. Right-sized output{RESET}")
     status, headers, everything = servicedesk("GET", "/assets", READ_TOKEN, {"limit": 100})
     found = dispatch("find_asset", {"query": "orders"})
-    print(f"   get_all_assets would return {len(json.dumps(everything))} characters to the model; "
-          f"find_asset(query='orders') returns {len(json.dumps(found))}")
+    print(f"{CYAN}   get_all_assets would return {len(json.dumps(everything))} characters to the model; "
+          f"find_asset(query='orders') returns {len(json.dumps(found))}{RESET}")
 
-    print("3. Errors the model can act on")
+    print(f"{CYAN}3. Errors the model can act on{RESET}")
     print("  ", short(dispatch("get_incident", {"incident_id": "INC-9999"})))
     print("  ", short(dispatch("search_incidents", {"status": "urgent"})))
     print("  ", short(dispatch("get_incident", {"incident_id": "12"})))

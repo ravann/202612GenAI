@@ -6,6 +6,10 @@ from model_adapter import ModelAdapter
 from evalkit import rate, run_all, save_report, summarise, verdict
 from servicedesk_tools import CONFIG, SYSTEM, TOOLS, cost_of
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 # The tool-choice eval: does the model pick the right tool (or no tool), with the right arguments, for each request?
 # It grades the model's FIRST decision only: one model call per run, and no tool is executed, so ServiceDesk is not
 # needed. A write that follows a look-up is invisible to it; grading whole runs is Session 7.
@@ -136,10 +140,10 @@ def first_reason(case_result):
 
 def main():
     if not os.getenv("ANTHROPIC_API_KEY"):             # no key: the run cannot ask the question, so there is no verdict
-        print("NO VERDICT: ANTHROPIC_API_KEY is not set (expected in src/.env)")
+        print(f"{CYAN}NO VERDICT: ANTHROPIC_API_KEY is not set (expected in src/.env){RESET}")
         sys.exit(2)
     if DRAFTS:
-        print("the six curated tools plus the generator's drafts:", ", ".join(DRAFTS))
+        print(f"{CYAN}the six curated tools plus the generator's drafts: {', '.join(DRAFTS)}{RESET}")
     results, stopped = run_all(run, grade, CASES, K, MAX_COST, ABORT_AFTER)
     for c in results:
         c["pass_rate"] = rate(c)
@@ -151,10 +155,10 @@ def main():
             shown = "n/a"                              # every run of this case failed at the API: nothing was graded
         else:
             shown = f"{c['pass_rate']:.2f}"
-        print(f"{c['id']:6} {TAG[c['id']]:9} {shown}  {first_reason(c)}")
-    print("per tag (passed/graded runs):", report["tags"])
-    print(report["summary"])
-    print("saved", path)
+        print(f"{CYAN}{c['id']:6} {TAG[c['id']]:9} {shown}  {first_reason(c)}{RESET}")
+    print(f"{CYAN}per tag (passed/graded runs): {report['tags']}{RESET}")
+    print(f"{CYAN}{report['summary']}{RESET}")
+    print(f"{CYAN}saved {path}{RESET}")
     sys.exit(verdict(report, MIN_PASS, MAX_API_SHARE))     # the exit code is the gate: 0 ship, 1 do not ship, 2 no verdict
 
 if __name__ == "__main__":

@@ -5,6 +5,10 @@ from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 load_dotenv(find_dotenv())                             # as in Session 3: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -138,8 +142,8 @@ def run_with_tools(model, user_message, tools, dispatch, max_steps=6):
         kinds = []
         for block in resp.content:
             kinds.append(block.type)
-        print(f"  step {step}: stop_reason={resp.stop_reason} | blocks: {', '.join(kinds)} | "
-              f"{resp.usage.input_tokens} in / {resp.usage.output_tokens} out | {money(cost)}")
+        print(f"{CYAN}  step {step}: stop_reason={resp.stop_reason} | blocks: {', '.join(kinds)} | "
+              f"{resp.usage.input_tokens} in / {resp.usage.output_tokens} out | {money(cost)}{RESET}")
         messages.append({"role": "assistant", "content": resp.content})     # keep ALL blocks, thinking included
         if resp.stop_reason != "tool_use":
             result["answer"] = model.text_of(resp)    # select text blocks by type, never content[0]
@@ -152,7 +156,7 @@ def run_with_tools(model, user_message, tools, dispatch, max_steps=6):
         for block in resp.content:                     # several tool_use blocks are parallel calls: run them all
             if block.type != "tool_use":
                 continue
-            print(f"    -> {block.name} {short(block.input)}")
+            print(f"{GREEN}    -> {block.name} {short(block.input)}{RESET}")
             out = dispatch(block.name, block.input)                       # your code decides what runs, never the model
             print(f"    <- {short(out)}")
             result["tool_calls"].append({"name": block.name, "input": block.input, "ok": out["ok"]})
@@ -165,14 +169,17 @@ PROMPTS = ["Which P1 incidents does checkout have?",                # one tool c
            "Compare INC-0012 and INC-0042 for me.",                  # two calls in one step: parallel calls
            "Show me incident INC-9999."]                             # an error is a result, not an exception
 
+PROMPTS = ["Which P1 incidents does checkout have?"]                # one tool call
+
+
 if __name__ == "__main__":
     model = ModelAdapter(replace(CONFIG, system=SYSTEM))
     prompts = PROMPTS
     if len(sys.argv) > 1:
         prompts = [sys.argv[1]]                        # or your own: python 1_tool_loop.py "Show me INC-0007"
     for prompt in prompts:
-        print("USER:", prompt)
+        print(f"{CYAN}USER: {prompt}{RESET}")
         r = run_with_tools(model, prompt, TOOLS, dispatch)
-        print("ANSWER:", r["answer"])
-        print(f"[stopped={r['stopped']} | steps {r['steps']} | tool calls {len(r['tool_calls'])} | {money(r['cost_usd'])}]")
+        print(f"{GREEN}ANSWER: {r['answer']}{RESET}")
+        print(f"{CYAN}[stopped={r['stopped']} | steps {r['steps']} | tool calls {len(r['tool_calls'])} | {money(r['cost_usd'])}]{RESET}")
         print()

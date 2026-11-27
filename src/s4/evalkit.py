@@ -4,6 +4,10 @@
 import json, time
 from pathlib import Path
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 
 def run_all(run, grade, cases, k, max_cost=0.50, abort_after=3):
     """Run every case k times. Returns (results, stopped): stopped is None for a complete run, otherwise the reason.
@@ -114,18 +118,18 @@ def verdict(report, min_pass=0.85, max_api_share=0.10):
     """Prints the verdict and returns the exit code: 0 gate passed, 1 gate failed, 2 no verdict."""
     s = report["summary"]
     if report["stopped"]:
-        print("NO VERDICT:", report["stopped"])
+        print(f"{CYAN}NO VERDICT: {report['stopped']}{RESET}")
         return 2
     if s["api_failures"] / s["runs"] > max_api_share:
-        print(f"NO VERDICT: {s['api_failures']} of {s['runs']} runs failed at the API, not at the task")
+        print(f"{CYAN}NO VERDICT: {s['api_failures']} of {s['runs']} runs failed at the API, not at the task{RESET}")
         return 2
     failures = gate(report, min_pass)
     if failures:
-        print("GATE FAILED")
+        print(f"{CYAN}GATE FAILED{RESET}")
         for f in failures:
-            print("  -", f)
+            print(f"{CYAN}  - {f}{RESET}")
         return 1
-    print("GATE PASSED")
+    print(f"{CYAN}GATE PASSED{RESET}")
     return 0
 
 

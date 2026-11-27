@@ -3,6 +3,10 @@ from pathlib import Path
 from mcp import Client, StdioServerParameters
 from servicedesk_tools import TOOLS_BY_NAME
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 # A small MCP client: it starts the server as a subprocess, lists its tools and calls some of them.
 # This is what a host (VS Code, Claude Code, the Inspector) does when it connects to the server.
 # The server writes only if the host is trusted to confirm: COMPASS_HOST_CONFIRMS=1 before you run this script.
@@ -62,25 +66,25 @@ def differences(published, ours):
 async def main():
     async with Client(SERVER) as client:               # starts the server; stops it when the block ends
         listing = await client.list_tools()
-        print(f"tools on the server: {len(listing.tools)} (* = required parameter)")
+        print(f"{CYAN}tools on the server: {len(listing.tools)} (* = required parameter){RESET}")
         drift = 0
         for tool in listing.tools:
             read_only = "?"                            # no annotations: the host is told nothing
             if tool.annotations is not None:
                 read_only = str(tool.annotations.read_only_hint)      # a hint for the host: does this tool change data?
-            print(f"  {tool.name:23} read_only={read_only:5}  {', '.join(parameters(tool.input_schema))}")
+            print(f"{CYAN}  {tool.name:23} read_only={read_only:5}  {', '.join(parameters(tool.input_schema))}{RESET}")
             found = differences(tool.input_schema, TOOLS_BY_NAME[tool.name]["input_schema"])
             if found:                                  # two definitions of one tool must not drift apart
                 drift += 1
-                print("    NOT THE SAME AS servicedesk_tools.py:", ", ".join(found))
-        print(f"tools that differ from servicedesk_tools.py (names, required, descriptions, enums): {drift}")
+                print(f"{CYAN}    NOT THE SAME AS servicedesk_tools.py: {', '.join(found)}{RESET}")
+        print(f"{CYAN}tools that differ from servicedesk_tools.py (names, required, descriptions, enums): {drift}{RESET}")
         first = listing.tools[0]                       # what a host's model reads about each parameter of one tool
         for name, prop in first.input_schema["properties"].items():
-            print(f"  {first.name}.{name}: {prop.get('description')}")
+            print(f"{CYAN}  {first.name}.{name}: {prop.get('description')}{RESET}")
         print()
         for name, args in CALLS:
             result = await client.call_tool(name, args)
-            print(f"call {name} {json.dumps(args)} -> is_error={result.is_error}")
+            print(f"{CYAN}call {name} {json.dumps(args)} -> is_error={result.is_error}{RESET}")
             text = result.content[0].text
             if len(text) > 160:
                 text = text[:160] + "..."

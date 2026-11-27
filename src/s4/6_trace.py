@@ -6,6 +6,10 @@ import jsonschema
 from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 load_dotenv(find_dotenv())                             # as in Session 3: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -52,7 +56,7 @@ class Trace:
             for key, value in s.attrs.items():
                 details += f"  {key}={value}"
             label = "  " * s.depth + s.name
-            print(f"{label:40} {s.ms:8.1f} ms{details}")
+            print(f"{CYAN}{label:40} {s.ms:8.1f} ms{details}{RESET}")
 
 TRACE = Trace()
 
@@ -335,7 +339,7 @@ def dispatch(name, args, confirm=None, scopes=COMPASS_SCOPES):
 def ask_person(name, args):
     """A confirm function for the terminal: a person reads the exact call and answers. Session 7 adds approvals."""
     try:
-        answer = input(f"    CONFIRM {name} {json.dumps(args)}? [y/N] ")
+        answer = input(f"{CYAN}    CONFIRM {name} {json.dumps(args)}? [y/N] {RESET}")
     except EOFError:                                   # nobody at the keyboard: the answer is no
         return False
     return answer.strip().lower() == "y"
@@ -382,8 +386,8 @@ def run_with_tools(model, user_message, tools, dispatch, confirm=None, max_steps
         kinds = []
         for block in resp.content:
             kinds.append(block.type)
-        print(f"  step {step}: stop_reason={resp.stop_reason} | blocks: {', '.join(kinds)} | "
-              f"{resp.usage.input_tokens} in / {resp.usage.output_tokens} out | {money(cost)}")
+        print(f"{CYAN}  step {step}: stop_reason={resp.stop_reason} | blocks: {', '.join(kinds)} | "
+              f"{resp.usage.input_tokens} in / {resp.usage.output_tokens} out | {money(cost)}{RESET}")
         messages.append({"role": "assistant", "content": resp.content})     # keep ALL blocks, thinking included
         if resp.stop_reason != "tool_use":
             result["answer"] = model.text_of(resp)    # select text blocks by type, never content[0]
@@ -396,7 +400,7 @@ def run_with_tools(model, user_message, tools, dispatch, confirm=None, max_steps
         for block in resp.content:                     # several tool_use blocks are parallel calls: run them all
             if block.type != "tool_use":
                 continue
-            print(f"    -> {block.name} {short(block.input)}")
+            print(f"{GREEN}    -> {block.name} {short(block.input)}{RESET}")
             is_write = block.name in RULES and RULES[block.name]["risk"] != "read"
             if is_write:
                 writes += 1
@@ -423,12 +427,12 @@ if __name__ == "__main__":
     prompt = "INC-0012 is about a slow database. What else would break if that database failed?"
     if len(sys.argv) > 1:
         prompt = sys.argv[1]                           # or your own: python 6_trace.py "Compare INC-0012 and INC-0042"
-    print("USER:", prompt)
+    print(f"{CYAN}USER: {prompt}{RESET}")
     with TRACE.span("conversation") as root:
         r = run_with_tools(model, prompt, TOOLS, dispatch, confirm=ask_person)
         root.attrs["stopped"] = r["stopped"]
         root.attrs["cost"] = money(r["cost_usd"])
-    print("ANSWER:", r["answer"])
+    print(f"{GREEN}ANSWER: {r['answer']}{RESET}")
     print()
-    print("TRACE: one line per span, nested by depth (tokens are input/output)")
+    print(f"{CYAN}TRACE: one line per span, nested by depth (tokens are input/output){RESET}")
     TRACE.print_tree()

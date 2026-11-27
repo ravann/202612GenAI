@@ -2,6 +2,10 @@ import json, os, sys
 import urllib.error, urllib.request
 from pathlib import Path
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 # Generate draft tools from ServiceDesk's OpenAPI description: one draft per operation, no model call.
 # Names come from operationId, descriptions from the summary and the docstring, schemas from the parameters
 # and the request body. The drafts mirror the API, so they still need curating (4b_curate.py).
@@ -55,16 +59,16 @@ if __name__ == "__main__":
     try:
         openapi = load_openapi()
     except (urllib.error.URLError, TimeoutError, ConnectionError) as e:   # not running, too slow (10 s), or dropped
-        print(f"ServiceDesk did not answer at {SERVICEDESK_URL} ({e}).")
-        print(f"Start it with: python src/servicedesk/app.py, or use the pre-generated {SHIPPED.name}.")
+        print(f"{CYAN}ServiceDesk did not answer at {SERVICEDESK_URL} ({e}).{RESET}")
+        print(f"{CYAN}Start it with: python src/servicedesk/app.py, or use the pre-generated {SHIPPED.name}.{RESET}")
         sys.exit(2)
     drafts = generate(openapi)
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(drafts, indent=2) + "\n", encoding="utf-8")
-    print(f"{len(drafts)} draft tools from {openapi['info']['title']} {openapi['info']['version']}:")
+    print(f"{CYAN}{len(drafts)} draft tools from {openapi['info']['title']} {openapi['info']['version']}:{RESET}")
     for d in drafts:
-        print(f"  {d['name']:23} {d['x-http']:39} {d['x-risk']:17} {len(d['input_schema']['properties'])} properties")
-    print("saved", OUT)
+        print(f"{CYAN}  {d['name']:23} {d['x-http']:39} {d['x-risk']:17} {len(d['input_schema']['properties'])} properties{RESET}")
+    print(f"{CYAN}saved {OUT}{RESET}")
     if SHIPPED.exists():
         same = json.loads(SHIPPED.read_text(encoding="utf-8")) == drafts
-        print(f"same as the pre-generated {SHIPPED.name}: {same}")
+        print(f"{CYAN}same as the pre-generated {SHIPPED.name}: {same}{RESET}")

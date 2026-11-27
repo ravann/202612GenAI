@@ -2,6 +2,10 @@ import json, time, tomllib
 from dataclasses import dataclass
 import anthropic
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 
 @dataclass(frozen=True)
 class ModelConfig:
@@ -70,11 +74,11 @@ class ModelAdapter:
             hints = {401: "check ANTHROPIC_API_KEY", 403: "key lacks permission", 404: "check the model ID",
                      413: "request too large, shorten the history"}
             advice = "transient, retries used up" if transient else hints.get(e.status_code, "fix the request, do not retry")
-            print(f"\n[error {f'{e.status_code} {kind}'.strip()}: {advice}]")
+            print(f"\n{CYAN}[error {f'{e.status_code} {kind}'.strip()}: {advice}]{RESET}")
         except anthropic.APIConnectionError:                      # includes timeouts
-            print("\n[connection or timeout error, retries used up]")
+            print(f"\n{CYAN}[connection or timeout error, retries used up]{RESET}")
         except KeyboardInterrupt:                                 # Ctrl+C mid-stream: drop the partial answer
-            print("\n[interrupted]")
+            print(f"\n{CYAN}[interrupted]{RESET}")
         return None
 
     def cost_usd(self, usage):
@@ -88,7 +92,7 @@ class ModelAdapter:
         except KeyError:                               # no price for the model: still log the billed call, with the cost unknown
             cost, shown = None, f"cost unknown: add {self.config.model} to [prices]"
         first = f" | ttft {ttft:.2f}s" if ttft is not None else ""
-        print(f"[{resp.usage.input_tokens} in / {resp.usage.output_tokens} out | {seconds:.2f}s{first} | {shown} | {resp.stop_reason}]")
+        print(f"{CYAN}[{resp.usage.input_tokens} in / {resp.usage.output_tokens} out | {seconds:.2f}s{first} | {shown} | {resp.stop_reason}]{RESET}")
         with open(self.config.log_path, "a") as f:     # metadata only: never the prompt text, never a key
             f.write(json.dumps({"ts": time.time(), 
                                 "model": self.config.model, 

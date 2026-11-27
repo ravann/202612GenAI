@@ -4,6 +4,10 @@ from model_adapter import ModelAdapter
 from servicedesk_tools import (CONFIG, READ_TOKEN, SYSTEM, TOOLS, ServiceDeskError, dispatch, error, money,
                                reset_servicedesk, run_with_tools, servicedesk)
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 # Threat of the session: excessive agency. The same request goes to two agents with the same loop and model:
 #   NAIVE    one generic http_request tool, the change manager's token, no checks: it can do anything the API can
 #   CURATED  the six curated tools, scoped tokens, confirmation, a cap on writes: it can only do what we designed
@@ -49,15 +53,15 @@ if __name__ == "__main__":
     for label, tools, agent_dispatch in agents:
         reset_servicedesk()
         before = not_closed("printer-queue")
-        print("=" * 100)
-        print(label)
-        print("USER:", prompt)
+        print(CYAN + "=" * 100 + RESET)
+        print(f"{CYAN}{label}{RESET}")
+        print(f"{CYAN}USER: {prompt}{RESET}")
         r = run_with_tools(model, prompt, tools, agent_dispatch)    # confirm=None: no person is there to say yes
-        print("ANSWER:", r["answer"])
+        print(f"{GREEN}ANSWER: {r['answer']}{RESET}")
         succeeded = 0
         for call in r["tool_calls"]:
             if call["ok"]:
                 succeeded += 1
-        print(f"[tool calls {len(r['tool_calls'])}, succeeded {succeeded} | {money(r['cost_usd'])}]")
-        print(f"printer-queue incidents not closed: before {before}, after {not_closed('printer-queue')}")
+        print(f"{CYAN}[tool calls {len(r['tool_calls'])}, succeeded {succeeded} | {money(r['cost_usd'])}]{RESET}")
+        print(f"{CYAN}printer-queue incidents not closed: before {before}, after {not_closed('printer-queue')}{RESET}")
     reset_servicedesk()                                # leave the seed data as it was

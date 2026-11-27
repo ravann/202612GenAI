@@ -6,6 +6,10 @@ import jsonschema
 from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelAdapter, ModelConfig
 
+# ANSI escape codes, as in Session 3. CYAN: what this program prints. GREEN: what the model produced.
+# Tool responses keep the terminal's default color (black would vanish on a dark theme).
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"
+
 load_dotenv(find_dotenv())                             # as in Session 3: looks in this folder, then in each parent folder
 
 HERE = Path(__file__).parent
@@ -277,7 +281,7 @@ def dispatch(name, args, confirm=None, scopes=COMPASS_SCOPES):
 def ask_person(name, args):
     """A confirm function for the terminal: a person reads the exact call and answers. Session 7 adds approvals."""
     try:
-        answer = input(f"    CONFIRM {name} {json.dumps(args)}? [y/N] ")
+        answer = input(f"{CYAN}    CONFIRM {name} {json.dumps(args)}? [y/N] {RESET}")
     except EOFError:                                   # nobody at the keyboard: the answer is no
         return False
     return answer.strip().lower() == "y"
@@ -320,8 +324,8 @@ def run_with_tools(model, user_message, tools, dispatch, confirm=None, max_steps
         kinds = []
         for block in resp.content:
             kinds.append(block.type)
-        print(f"  step {step}: stop_reason={resp.stop_reason} | blocks: {', '.join(kinds)} | "
-              f"{resp.usage.input_tokens} in / {resp.usage.output_tokens} out | {money(cost)}")
+        print(f"{CYAN}  step {step}: stop_reason={resp.stop_reason} | blocks: {', '.join(kinds)} | "
+              f"{resp.usage.input_tokens} in / {resp.usage.output_tokens} out | {money(cost)}{RESET}")
         messages.append({"role": "assistant", "content": resp.content})     # keep ALL blocks, thinking included
         if resp.stop_reason != "tool_use":
             result["answer"] = model.text_of(resp)    # select text blocks by type, never content[0]
@@ -334,7 +338,7 @@ def run_with_tools(model, user_message, tools, dispatch, confirm=None, max_steps
         for block in resp.content:                     # several tool_use blocks are parallel calls: run them all
             if block.type != "tool_use":
                 continue
-            print(f"    -> {block.name} {short(block.input)}")
+            print(f"{GREEN}    -> {block.name} {short(block.input)}{RESET}")
             is_write = block.name in RULES and RULES[block.name]["risk"] != "read"
             if is_write:
                 writes += 1
@@ -368,37 +372,37 @@ ASSIGN ={"incident_id": "INC-0012", "assignee": "dave"}
 
 if __name__ == "__main__":
     reset_servicedesk()
-    print("1. Idempotency: the same intent, sent twice (a retry)")
+    print(f"{CYAN}1. Idempotency: the same intent, sent twice (a retry){RESET}")
     for attempt in [1, 2]:
-        print(f"   attempt {attempt}:", short(dispatch("propose_change_request", CHANGE)["proposal"]))
-    print("   the same intent, reworded:", short(dispatch("propose_change_request", REWORDED)["proposal"]))
-    print("   the same intent with a random key per attempt:")
+        print(f"{CYAN}   attempt {attempt}:{RESET}", short(dispatch("propose_change_request", CHANGE)["proposal"]))
+    print(f"{CYAN}   the same intent, reworded:{RESET}", short(dispatch("propose_change_request", REWORDED)["proposal"]))
+    print(f"{CYAN}   the same intent with a random key per attempt:{RESET}")
     for attempt in [1, 2]:
         status, headers, change = servicedesk("POST", "/changes", WRITE_TOKEN, body=CHANGE,
                                               headers={"Idempotency-Key": str(uuid.uuid4())})
-        print(f"   attempt {attempt}: created {change['id']} (HTTP {status})")
+        print(f"{CYAN}   attempt {attempt}: created {change['id']} (HTTP {status}){RESET}")
     status, headers, data = servicedesk("GET", "/changes", READ_TOKEN, {"status": "pending_approval"})
-    print(f"   changes pending approval now: {data['total']} (the seed data has 2)")
+    print(f"{CYAN}   changes pending approval now: {data['total']} (the seed data has 2){RESET}")
 
-    print("2. Least privilege")
-    print("   approve_change:", short(dispatch("approve_change", {"change_id": "CHG-0003"})))
+    print(f"{CYAN}2. Least privilege{RESET}")
+    print(f"{CYAN}   approve_change:{RESET}", short(dispatch("approve_change", {"change_id": "CHG-0003"})))
     try:
         servicedesk("POST", "/changes/CHG-0003/approve", WRITE_TOKEN)
     except ServiceDeskError as e:
-        print(f"   the write token cannot approve either: HTTP {e.status}, {e.body['detail']}")
-    print("   a read-only Compass:", short(dispatch("assign_incident", ASSIGN, scopes=["incidents:read"])))
+        print(f"{CYAN}   the write token cannot approve either: HTTP {e.status}, {e.body['detail']}{RESET}")
+    print(f"{CYAN}   a read-only Compass:{RESET}", short(dispatch("assign_incident", ASSIGN, scopes=["incidents:read"])))
 
-    print("3. Confirmation")
-    print("   nobody to confirm:", short(dispatch("assign_incident", ASSIGN)))
-    print("   a person confirms:", short(dispatch("assign_incident", ASSIGN, confirm=ask_person)))
+    print(f"{CYAN}3. Confirmation{RESET}")
+    print(f"{CYAN}   nobody to confirm:{RESET}", short(dispatch("assign_incident", ASSIGN)))
+    print(f"{CYAN}   a person confirms:{RESET}", short(dispatch("assign_incident", ASSIGN, confirm=ask_person)))
 
-    print("4. The loop with the write tools")
+    print(f"{CYAN}4. The loop with the write tools{RESET}")
     model = ModelAdapter(replace(CONFIG, system=SYSTEM))
     prompt = ("Assign INC-0007 to erin. Then propose a low-risk change to restart print-srv-01 for INC-0007, "
               "with 'restart it again' as the rollback plan.")
     if len(sys.argv) > 1:
         prompt = sys.argv[1]                           # or your own: python 3_safe_writes.py "Assign INC-0019 to bob"
-    print("USER:", prompt)
+    print(f"{CYAN}USER: {prompt}{RESET}")
     r = run_with_tools(model, prompt, TOOLS, dispatch, confirm=ask_person)
-    print("ANSWER:", r["answer"])
-    print(f"[stopped={r['stopped']} | steps {r['steps']} | tool calls {len(r['tool_calls'])} | {money(r['cost_usd'])}]")
+    print(f"{GREEN}ANSWER: {r['answer']}{RESET}")
+    print(f"{CYAN}[stopped={r['stopped']} | steps {r['steps']} | tool calls {len(r['tool_calls'])} | {money(r['cost_usd'])}]{RESET}")
