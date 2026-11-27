@@ -75,9 +75,9 @@ def evaluate(prompt=PROMPT, k=K, max_cost=MAX_COST, config=CONFIG, **options):
         c["pass_rate"] = rate(c)
     report = {"prompt": prompt, "model": config.model, "delimit": extractor.delimit, "k": k, "stopped": stopped,
               "summary": summarise(results), "cases": results}
-    label = prompt
+    label = f"{prompt}-{config.model}"
     if not extractor.delimit:
-        label = prompt + "-nodelimit"                  # the file name tells the two v1 variants apart
+        label += "-nodelimit"                          # the file name tells the two v1 variants apart
     return report, save_report(report, HERE / "reports", label)
 
 def first_reason(case_result):

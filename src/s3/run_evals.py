@@ -153,9 +153,9 @@ def evaluate(prompt=PROMPT, k=K, max_cost=MAX_COST, config=CONFIG, **options):
         c["pass_rate"] = rate(c)
     report = {"prompt": prompt, "model": config.model, "delimit": extractor.delimit, "k": k, "stopped": stopped,
               "summary": summarise(results), "cases": results}
-    label = prompt
+    label = f"{prompt}-{config.model}"
     if not extractor.delimit:
-        label = prompt + "-nodelimit"                  # the file name tells the two v1 variants apart
+        label += "-nodelimit"                          # the file name tells the two v1 variants apart
     path = HERE / "reports" / f"{label}-{time.strftime('%Y%m%d-%H%M%S')}.json"
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(report, indent=1), encoding="utf-8")    # ids, outcomes and reasons, never the ticket text
