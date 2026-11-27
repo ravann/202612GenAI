@@ -1,7 +1,7 @@
 import os, sys
 from run_evals import HERE, evaluate, gate
 
-CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"      # ANSI escape codes; work in most terminals
 
 FLIP = 0.6                     # a case flipped when its pass rate fell by more than half its runs, e.g. 3/3 to 1/3 or 0/3
 
@@ -28,13 +28,19 @@ if __name__ == "__main__":
     if not os.getenv("ANTHROPIC_API_KEY"):             # no key: the run cannot ask the question, so there is no verdict
         print(f"{CYAN}NO VERDICT: ANTHROPIC_API_KEY is not set (expected in code/.env){RESET}")
         sys.exit(2)
+
+    # Run the baseline first
+    print(f"{GREEN}running baseline: incident-v2{RESET}")
     base, base_path = evaluate("incident-v2")
     if base["stopped"]:
         sys.exit(f"the baseline stopped early, so there is nothing to compare with: {base['stopped']}")
     print(f"{CYAN}baseline pass {base['summary']['pass_rate']:.2f} | gate failures {len(gate(base))} | {base_path.name}{RESET}")
     if gate(base):
         print(f"{CYAN}  the baseline fails its own gate: a mutant 'caught' by the gate alone proves nothing{RESET}")
+
+    # Run the mutants
     for name, options in MUTANTS:
+        print(f"{GREEN}running mutant: {name}{RESET}")
         report, path = evaluate(**options)             # each key of the dict becomes a keyword argument, e.g. delimit=False
         if report["stopped"]:
             print(f"{CYAN}{name:24} NO VERDICT: {report['stopped']}{RESET}")

@@ -5,7 +5,7 @@ from dotenv import find_dotenv, load_dotenv
 from model_adapter import ModelConfig
 from extractor import Extractor
 
-CYAN, RESET = "\033[36m", "\033[0m"      # ANSI escape codes; work in most terminals
+CYAN, GREEN, RESET = "\033[36m", "\033[32m", "\033[0m"      # ANSI escape codes; work in most terminals
 
 load_dotenv(find_dotenv())                             # as in 0_main.py: looks in this folder, then in each parent folder
 
@@ -149,14 +149,15 @@ def summarise(results):
 def evaluate(prompt=PROMPT, k=K, max_cost=MAX_COST, config=CONFIG, **options):
     """Run the suite against one Extractor. options go to Extractor (prompts_dir, delimit). Saves and returns the report."""
     extractor = Extractor(config, prompt=prompt, verbose=False, **options)     # verbose=False: this report is the log
+    label = f"{prompt}-{config.model}"
+    if not extractor.delimit:
+        label += "-nodelimit"                          # the file name tells the two v1 variants apart
+    print(f"{GREEN}running {label} with {k} repeats per case, max cost ${max_cost:.2f}{RESET}")
     results, stopped = run_all(extractor, CASES, k, max_cost)
     for c in results:
         c["pass_rate"] = rate(c)
     report = {"prompt": prompt, "model": config.model, "delimit": extractor.delimit, "k": k, "stopped": stopped,
               "summary": summarise(results), "cases": results}
-    label = f"{prompt}-{config.model}"
-    if not extractor.delimit:
-        label += "-nodelimit"                          # the file name tells the two v1 variants apart
     path = HERE / "reports" / f"{label}-{time.strftime('%Y%m%d-%H%M%S')}.json"
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(report, indent=1), encoding="utf-8")    # ids, outcomes and reasons, never the ticket text
