@@ -8,6 +8,7 @@ from servicedesk_tools import TOOLS_BY_NAME, dispatch
 # The smallest useful MCP server: one curated tool, search_incidents. It adds no tool logic of its own: the call
 # goes through the same dispatch() as the model loop. 5b_mcp_server.py serves all six tools.
 # An MCP client starts it as a subprocess and talks to it over stdin and stdout:
+#   python src/s4/5a_mcp_list_tools.py              (only lists the tools)
 #   python src/s4/5c_mcp_client.py 5a_mcp_one_tool.py
 #   or: npx @modelcontextprotocol/inspector@2.15.0 python src/s4/5a_mcp_one_tool.py
 # Rule for stdio servers: stdout carries only protocol messages. Everything else goes to stderr.

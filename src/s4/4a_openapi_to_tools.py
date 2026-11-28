@@ -14,6 +14,8 @@ HERE = Path(__file__).parent
 SERVICEDESK_URL = os.environ.get("SERVICEDESK_URL", "http://127.0.0.1:8000")
 SHIPPED = HERE / "generated_tools.json"                # the pre-generated copy: the fallback, never overwritten here
 OUT = HERE / "reports" / "generated_tools.json"        # what this run generates
+OUT_SIMPLE = HERE / "reports" / "generated_tools_simple.json"  # the same drafts without input_schema, for reviewing
+OPENAPI = HERE / "reports" / "openapi.json"                # the OpenAPI description, for inspection
 
 def load_openapi():
     with urllib.request.urlopen(SERVICEDESK_URL + "/openapi.json", timeout=10) as response:
@@ -58,6 +60,8 @@ def generate(openapi):
 if __name__ == "__main__":
     try:
         openapi = load_openapi()
+        OPENAPI.parent.mkdir(exist_ok=True)
+        OPENAPI.write_text(json.dumps(openapi, indent=2) + "\n", encoding="utf-8")
     except (urllib.error.URLError, TimeoutError, ConnectionError) as e:   # not running, too slow (10 s), or dropped
         print(f"{CYAN}ServiceDesk did not answer at {SERVICEDESK_URL} ({e}).{RESET}")
         print(f"{CYAN}Start it with: python src/servicedesk/app.py, or use the pre-generated {SHIPPED.name}.{RESET}")
@@ -65,10 +69,13 @@ if __name__ == "__main__":
     drafts = generate(openapi)
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(drafts, indent=2) + "\n", encoding="utf-8")
+    simple = [{k: v for k, v in d.items() if k != "input_schema"} for d in drafts]
+    OUT_SIMPLE.write_text(json.dumps(simple, indent=2) + "\n", encoding="utf-8")
     print(f"{CYAN}{len(drafts)} draft tools from {openapi['info']['title']} {openapi['info']['version']}:{RESET}")
     for d in drafts:
         print(f"{CYAN}  {d['name']:23} {d['x-http']:39} {d['x-risk']:17} {len(d['input_schema']['properties'])} properties{RESET}")
     print(f"{CYAN}saved {OUT}{RESET}")
+    print(f"{CYAN}saved {OUT_SIMPLE} (no input_schema){RESET}")
     if SHIPPED.exists():
         same = json.loads(SHIPPED.read_text(encoding="utf-8")) == drafts
         print(f"{CYAN}same as the pre-generated {SHIPPED.name}: {same}{RESET}")
