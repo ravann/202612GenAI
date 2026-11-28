@@ -241,21 +241,21 @@ if __name__ == "__main__":
     print(f"{CYAN}1. Which tool would the model call first? (one call per line, no tool runs){RESET}")
     total = 0.0
     for question in QUESTIONS:
-        print(f"{CYAN}USER: {question}{RESET}")
+        print(f"USER: {question}")
         for label, tools in [("weak", WEAK_TOOLS), ("agent-ready", TOOLS)]:
             choice, cost = first_choice(model, tools, question)
             print(f"{CYAN}   {label:12}{RESET} {GREEN}{choice}{RESET}")
             if cost is not None:
                 total += cost
-    print(f"{CYAN}   [{2 * len(QUESTIONS)} model calls | ${total:.4f}]{RESET}")
+    print(f"   [{2 * len(QUESTIONS)} model calls | ${total:.4f}]")
 
     print(f"{CYAN}2. Right-sized output{RESET}")
     status, headers, everything = servicedesk("GET", "/assets", READ_TOKEN, {"limit": 100})
     found = dispatch("find_asset", {"query": "orders"})
-    print(f"{CYAN}   get_all_assets would return {len(json.dumps(everything))} characters to the model; "
-          f"find_asset(query='orders') returns {len(json.dumps(found))}{RESET}")
+    print(f"   get_all_assets would return {len(json.dumps(everything))} characters to the model; ")
+    print(f"   find_asset(query='orders') returns {len(json.dumps(found))}")
 
     print(f"{CYAN}3. Errors the model can act on{RESET}")
-    print("  ", short(dispatch("get_incident", {"incident_id": "INC-9999"})))
-    print("  ", short(dispatch("search_incidents", {"status": "urgent"})))
-    print("  ", short(dispatch("get_incident", {"incident_id": "12"})))
+    print("  ", dispatch("get_incident", {"incident_id": "INC-9999"}))
+    print("  ", dispatch("search_incidents", {"status": "urgent"}))
+    print("  ", dispatch("get_incident", {"incident_id": "12"}))

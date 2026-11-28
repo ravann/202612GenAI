@@ -372,11 +372,12 @@ ASSIGN ={"incident_id": "INC-0012", "assignee": "dave"}
 
 if __name__ == "__main__":
     reset_servicedesk()
-    print(f"{CYAN}1. Idempotency: the same intent, sent twice (a retry){RESET}")
+    print(f"{CYAN}1a. Idempotency: the same intent, sent twice (a retry){RESET}")
     for attempt in [1, 2]:
-        print(f"{CYAN}   attempt {attempt}:{RESET}", short(dispatch("propose_change_request", CHANGE)["proposal"]))
-    print(f"{CYAN}   the same intent, reworded:{RESET}", short(dispatch("propose_change_request", REWORDED)["proposal"]))
-    print(f"{CYAN}   the same intent with a random key per attempt:{RESET}")
+        print(f"{CYAN}   attempt {attempt}:{RESET}", dispatch("propose_change_request", CHANGE)["proposal"])
+    print(f"{CYAN}   the same intent, reworded:{RESET}", dispatch("propose_change_request", REWORDED)["proposal"])
+
+    print(f"{CYAN}1b. the same intent with a random key per attempt:{RESET}")
     for attempt in [1, 2]:
         status, headers, change = servicedesk("POST", "/changes", WRITE_TOKEN, body=CHANGE,
                                               headers={"Idempotency-Key": str(uuid.uuid4())})
@@ -384,13 +385,15 @@ if __name__ == "__main__":
     status, headers, data = servicedesk("GET", "/changes", READ_TOKEN, {"status": "pending_approval"})
     print(f"{CYAN}   changes pending approval now: {data['total']} (the seed data has 2){RESET}")
 
+    print("---")
+
     print(f"{CYAN}2. Least privilege{RESET}")
-    print(f"{CYAN}   approve_change:{RESET}", short(dispatch("approve_change", {"change_id": "CHG-0003"})))
+    print(f"{CYAN}   approve_change:{RESET}", dispatch("approve_change", {"change_id": "CHG-0003"}))
     try:
         servicedesk("POST", "/changes/CHG-0003/approve", WRITE_TOKEN)
     except ServiceDeskError as e:
         print(f"{CYAN}   the write token cannot approve either: HTTP {e.status}, {e.body['detail']}{RESET}")
-    print(f"{CYAN}   a read-only Compass:{RESET}", short(dispatch("assign_incident", ASSIGN, scopes=["incidents:read"])))
+    print(f"{CYAN}   a read-only Compass:{RESET}", dispatch("assign_incident", ASSIGN, scopes=["incidents:read"]))
 
     print(f"{CYAN}3. Confirmation{RESET}")
     print(f"{CYAN}   nobody to confirm:{RESET}", short(dispatch("assign_incident", ASSIGN)))

@@ -169,9 +169,6 @@ PROMPTS = ["Which P1 incidents does checkout have?",                # one tool c
            "Compare INC-0012 and INC-0042 for me.",                  # two calls in one step: parallel calls
            "Show me incident INC-9999."]                             # an error is a result, not an exception
 
-PROMPTS = ["Which P1 incidents does checkout have?"]                # one tool call
-
-
 if __name__ == "__main__":
     model = ModelAdapter(replace(CONFIG, system=SYSTEM))
     prompts = PROMPTS
